@@ -29,8 +29,47 @@ his requirements in comments until it's clear where his project is heading. -->
        android:layout_width="fill_parent"
        android:layout_height="wrap_content"
        android:gravity="center_vertical|center_horizontal"
-       android:textSize="60sp"
+       android:textSize="50sp"
        android:text="Waiting for GPS"/>
+
+   <LinearLayout
+       android:layout_width="fill_parent"
+       android:layout_height="wrap_content"
+       android:orientation="horizontal" >
+
+       <Button
+           android:id="@+id/button_L"
+           android:layout_width="0dip"
+           android:layout_height="fill_parent"
+           android:layout_weight="1"
+           android:text="L"
+           android:textSize="30sp" />
+
+       <Button
+           android:id="@+id/button_F"
+           android:layout_width="0dip"
+           android:layout_height="fill_parent"
+           android:layout_weight="1"
+           android:text="F"
+           android:textSize="30sp" />
+
+       <Button
+           android:id="@+id/button_Enter"
+           android:layout_width="0dip"
+           android:layout_height="fill_parent"
+           android:layout_weight="1"
+           android:text="Enter"
+           android:textSize="30sp"
+           android:visibility="gone" />
+
+       <Button
+           android:id="@+id/button_R"
+           android:layout_width="0dip"
+           android:layout_height="fill_parent"
+           android:layout_weight="1"
+           android:text="R"
+           android:textSize="30sp" />
+   </LinearLayout>
 
     <LinearLayout
         android:layout_height="wrap_content"
@@ -100,7 +139,7 @@ his requirements in comments until it's clear where his project is heading. -->
         android:orientation="horizontal" android:layout_width="fill_parent">
         
         <Button android:id="@+id/button_C"
-            android:text="C" android:textSize="30sp"
+            android:text="CLR" android:textSize="30sp"
             android:layout_width="0dip" android:layout_weight="1"
             android:layout_height="fill_parent" />
 
@@ -112,7 +151,7 @@ his requirements in comments until it's clear where his project is heading. -->
         <Button android:id="@+id/button_DEL"
             android:text="DEL" android:textSize="30sp"
             android:layout_width="0dip" android:layout_weight="1"
-            android:layout_height="fill_parent" />
+            android:layout_height="fill_parent"/>
 
     </LinearLayout>
 <!--    <LinearLayout
@@ -174,35 +213,6 @@ his requirements in comments until it's clear where his project is heading. -->
         android:layout_height="wrap_content"
         android:orientation="horizontal" android:layout_width="fill_parent">
         
-        <Button android:tag="" 
-            android:id="@+id/button_L"
-            android:text="L" android:textSize="30sp"
-            android:layout_width="0dip" android:layout_weight="1"
-            android:layout_height="fill_parent" />
-
-        <Button android:tag=""  
-            android:id="@+id/button_F"
-            android:text="F" android:textSize="30sp"
-            android:layout_width="0dip" android:layout_weight="1"
-            android:layout_height="fill_parent" />
- 
-        <Button android:tag="" android:visibility="gone" 
-            android:id="@+id/button_Enter"
-            android:text="Enter" android:textSize="30sp"
-            android:layout_width="0dip" android:layout_weight="1"
-            android:layout_height="fill_parent" />
- 
-        <Button android:tag=""
-          	android:id="@+id/button_R"
-            android:text="R" android:textSize="30sp"
-            android:layout_width="0dip" android:layout_weight="1"
-            android:layout_height="fill_parent" />
-
-    </LinearLayout>
-    <LinearLayout
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" android:layout_width="fill_parent">
-        
         <Button android:tag="a"
             android:text="a" android:textSize="30sp"
             android:layout_width="0dip" android:layout_weight="1"
@@ -217,12 +227,6 @@ his requirements in comments until it's clear where his project is heading. -->
             android:text="c" android:textSize="30sp"
             android:layout_width="0dip" android:layout_weight="1"
             android:layout_height="fill_parent" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" android:layout_width="fill_parent">
         
         <Button android:tag="d"
             android:text="d" android:textSize="30sp"
@@ -241,12 +245,70 @@ his requirements in comments until it's clear where his project is heading. -->
 
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" android:layout_width="fill_parent">
+        
+        <Button android:tag="g"
+            android:text="g" android:textSize="30sp"
+            android:layout_width="0dip" android:layout_weight="1"
+            android:layout_height="fill_parent" />
+
+        <Button android:tag="h"
+            android:text="h" android:textSize="30sp"
+            android:layout_width="0dip" android:layout_weight="1"
+            android:layout_height="fill_parent" />
+
+        <Button android:tag="i"
+            android:text="i" android:textSize="30sp"
+            android:layout_width="0dip" android:layout_weight="1"
+            android:layout_height="fill_parent" />
+        
+        <Button android:tag="j"
+            android:text="j" android:textSize="30sp"
+            android:layout_width="0dip" android:layout_weight="1"
+            android:layout_height="fill_parent" />
+
+        <Button android:tag="k"
+            android:text="k" android:textSize="30sp"
+            android:layout_width="0dip" android:layout_weight="1"
+            android:layout_height="fill_parent" />
+
+        <Button android:tag="l"
+            android:text="l" android:textSize="30sp"
+            android:layout_width="0dip" android:layout_weight="1"
+            android:layout_height="fill_parent" />
+
+    </LinearLayout>
+
 <!-- Leave a space, making it harder to hit stop -->
+
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" android:layout_width="fill_parent">
+        
+        <Button android:tag=","
+            android:text="," android:textSize="30sp"
+            android:layout_width="0dip" android:layout_weight="1"
+            android:layout_height="fill_parent" />
+
+        <Button android:tag="-"
+            android:text="-" android:textSize="30sp"
+            android:layout_width="0dip" android:layout_weight="1"
+            android:layout_height="fill_parent" />
+
+        <Button android:tag="/"
+            android:text="/" android:textSize="30sp"
+            android:layout_width="0dip" android:layout_weight="1"
+            android:layout_height="fill_parent" />
+
+    </LinearLayout>
+
    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
        android:layout_width="fill_parent"
        android:layout_height="wrap_content"
        android:gravity="center_vertical|center_horizontal"
-       android:textSize="60sp"
+       android:textSize="30sp"
        android:text=""/>
 
         <Button android:tag=""

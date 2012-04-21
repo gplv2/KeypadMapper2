@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">Keypadmapper2</string>
     <string name="backspace">Backspace</string>
     <string name="buttonLeft">L</string>
@@ -33,4 +34,5 @@
     <string name="buttonSep3">/</string>
     <string name="buttonStop">Stop Recording</string>
     <string name="waitForGps">Waiting for GPS</string>
+
 </resources>

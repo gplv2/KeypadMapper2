@@ -35,9 +35,11 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 final class Gps implements LocationListener {
@@ -67,7 +69,7 @@ final class Gps implements LocationListener {
     }
 }
 
-public class KeypadMapper2Activity extends Activity { //implements LocationListener {
+public class KeypadMapper2Activity extends Activity implements OnClickListener { //implements LocationListener {
 	final boolean wildlife = false;
 	private String val = "";
 	static Gps gps = null;
@@ -79,72 +81,74 @@ public class KeypadMapper2Activity extends Activity { //implements LocationListe
         	}
         	else if (Button.class.isInstance(btnGroup.getChildAt(i))){
             Button button = (Button) btnGroup.getChildAt(i);//findViewById (ids[i]);
-            button.setOnClickListener(new Button.OnClickListener() {
-          	  private void Do (double fwd, double left) { // fwd and left are distances in 111111 meter
-          		  if (wildlife) {
-              		  PrintWriter out = null;
-              		  Date d = new Date ();
-          			  try {
-          				  out = new PrintWriter (new FileOutputStream (
-          						  Environment.getExternalStorageDirectory() + "WildlifeSurvey", true));
-          				  out.println (d.getTime() + "," + gps.lon + "," + gps.lat + "," + val);
-          			  } catch (FileNotFoundException e) {
-          				  Assert.assertNotNull ("Error writing the file!", out);
-          			  } finally {
-          				  if (out != null) out.close ();        			  
-          				  Assert.assertNotNull ("Error writing the file!", out);
-          			  }
-          			  val = "";        		  
-          		  }
-          		  else {
-          			  try {
-          				  gps.osm.seek(gps.osm.getFilePointer() - 7); // Overwrite </osm>\n
-          				  gps.osm.writeBytes ("<node id='"+ --gps.osmid + "' visible='true' lat='"+
-          					  (gps.lat+Math.sin(Math.PI/180*gps.bearing)*left+
-          					  Math.cos(Math.PI/180*gps.bearing)*fwd)
-          					  +"' lon='"+(gps.lon+(Math.sin(Math.PI/180*gps.bearing)*fwd-
-          					  Math.cos(Math.PI/180*gps.bearing)*left)/Math.cos(Math.PI/180*gps.lat))+
-          					  "'>\n <tag k='addr:housenumber' v='"+val+"'/>\n</node>\n</osm>\n");
-              			  val = "";        		  
-          			  }  catch (IOException e) {
-          			  	val = "Error writing osm file";
-          			  }
-          		  }
-      			  /*if (out == null) AlertDialog.Builder(mContext)
-                    .setIcon(R.drawable.alert_dialog_icon)
-                    .setTitle("Error writing file !")*/
-                    /*.setPositiveButton(R.string.alert_dialog_ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int whichButton) {
-
-                        }
-                    }); */
-                    //.create ();
-          	  }
-          	  public void onClick (View v) {
-          		  	if (v == findViewById (R.id.button_Stop)) {
-      				  	gps.wl.release ();
-	                		gps.lm.removeUpdates(gps);
-          		  		gps.record = 0;
-          		  		finish ();
-        	        	}
-          		  	else {
-          		  		if (v == findViewById (R.id.button_C)) val = "";
-          		  		else if (v == findViewById (R.id.button_DEL)) {
-          		  			if (val.length() > 0) val = val.substring(0, val.length()-1);
-          		  		}
-          		  		else val = val + v.getTag();
-          		  		if (v == findViewById (R.id.button_L)) Do (0, 25.0/111111);
-          		  		else if (v == findViewById (R.id.button_F)) Do (50.0/111111, 0);
-          		  		else if (v == findViewById (R.id.button_R)) Do (0, -25.0/111111);
-          		  		else if (v == findViewById (R.id.button_Enter)) Do (0, 0);
-          		  		gps.tw.setText (val);
-          		  	}
-          	  }
-            });
-          }    
+            button.setOnClickListener(this);
+          }
+        	else if (ImageButton.class.isInstance(btnGroup.getChildAt(i))){
+        		ImageButton imageButton = (ImageButton) btnGroup.getChildAt(i);
+        		imageButton.setOnClickListener(this);
+        	}
         }
     }
+    private void Do (double fwd, double left) { // fwd and left are distances in 111111 meter
+		  if (wildlife) {
+    		  PrintWriter out = null;
+    		  Date d = new Date ();
+			  try {
+				  out = new PrintWriter (new FileOutputStream (
+						  Environment.getExternalStorageDirectory() + "WildlifeSurvey", true));
+				  out.println (d.getTime() + "," + gps.lon + "," + gps.lat + "," + val);
+			  } catch (FileNotFoundException e) {
+				  Assert.assertNotNull ("Error writing the file!", out);
+			  } finally {
+				  if (out != null) out.close ();        			  
+				  Assert.assertNotNull ("Error writing the file!", out);
+			  }
+			  val = "";        		  
+		  }
+		  else {
+			  try {
+				  gps.osm.seek(gps.osm.getFilePointer() - 7); // Overwrite </osm>\n
+				  gps.osm.writeBytes ("<node id='"+ --gps.osmid + "' visible='true' lat='"+
+					  (gps.lat+Math.sin(Math.PI/180*gps.bearing)*left+
+					  Math.cos(Math.PI/180*gps.bearing)*fwd)
+					  +"' lon='"+(gps.lon+(Math.sin(Math.PI/180*gps.bearing)*fwd-
+					  Math.cos(Math.PI/180*gps.bearing)*left)/Math.cos(Math.PI/180*gps.lat))+
+					  "'>\n <tag k='addr:housenumber' v='"+val+"'/>\n</node>\n</osm>\n");
+    			  val = "";        		  
+			  }  catch (IOException e) {
+			  	val = "Error writing osm file";
+			  }
+		  }
+		  /*if (out == null) AlertDialog.Builder(mContext)
+          .setIcon(R.drawable.alert_dialog_icon)
+          .setTitle("Error writing file !")*/
+          /*.setPositiveButton(R.string.alert_dialog_ok, new DialogInterface.OnClickListener() {
+              public void onClick(DialogInterface dialog, int whichButton) {
 
+              }
+          }); */
+          //.create ();
+	  }
+	  public void onClick (View v) {
+		  	if (v == findViewById (R.id.button_Stop)) {
+			  	gps.wl.release ();
+          		gps.lm.removeUpdates(gps);
+		  		gps.record = 0;
+		  		finish ();
+	        	}
+		  	else {
+		  		if (v == findViewById (R.id.button_C)) val = "";
+		  		else if (v == findViewById (R.id.button_DEL)) {
+		  			if (val.length() > 0) val = val.substring(0, val.length()-1);
+		  		}
+		  		else val = val + v.getTag();
+		  		if (v == findViewById (R.id.button_L)) Do (0, 25.0/111111);
+		  		else if (v == findViewById (R.id.button_F)) Do (50.0/111111, 0);
+		  		else if (v == findViewById (R.id.button_R)) Do (0, -25.0/111111);
+		  		gps.tw.setText (val);
+		  	}
+	  }
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {

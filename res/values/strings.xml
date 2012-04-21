@@ -1,5 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World!</string>
     <string name="app_name">Keypadmapper2</string>
+    <string name="backspace">Backspace</string>
+    <string name="buttonLeft">L</string>
+    <string name="buttonFront">F</string>
+    <string name="buttonRight">R</string>
+    <string name="button1">1</string>
+    <string name="button2">2</string>
+    <string name="button3">3</string>
+    <string name="button4">4</string>
+    <string name="button5">5</string>
+    <string name="button6">6</string>
+    <string name="button7">7</string>
+    <string name="button8">8</string>
+    <string name="button9">9</string>
+    <string name="buttonCLR">CLR</string>
+    <string name="button0">0</string>
+    <string name="buttonA">a</string>
+    <string name="buttonB">b</string>
+    <string name="buttonC">c</string>
+    <string name="buttonD">d</string>
+    <string name="buttonE">e</string>
+    <string name="buttonF">f</string>
+    <string name="buttonG">g</string>
+    <string name="buttonH">h</string>
+    <string name="buttonI">i</string>
+    <string name="buttonJ">j</string>
+    <string name="buttonK">k</string>
+    <string name="buttonL">l</string>
+    <string name="buttonSep1">,</string>
+    <string name="buttonSep2">-</string>
+    <string name="buttonSep3">/</string>
+    <string name="buttonStop">Stop Recording</string>
+    <string name="waitForGps">Waiting for GPS</string>
 </resources>

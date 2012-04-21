@@ -63,7 +63,7 @@ final class Gps implements LocationListener {
 
 	public void onLocationChanged(Location location) {
 		if (lon < -180 && tw != null)
-			tw.setText("Ready!");
+			tw.setText(R.string.ready);
 		lon = location.getLongitude();
 		lat = location.getLatitude();
 		bearing = location.getBearing();
@@ -142,7 +142,7 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 						+ "'/>\n</node>\n</osm>\n");
 				val = "";
 			} catch (IOException e) {
-				val = "Error writing osm file";
+				val = getString(R.string.errorFileOpen);
 			}
 		}
 		/*
@@ -221,10 +221,10 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 						+ "xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">\n"
 						+ "<trk>\n" + "<trkseg>\n</trkseg>\n</trk>\n</gpx>\n");
 			} catch (FileNotFoundException e) {
-				gps.tw.setText("Unable to open logging file");
+				gps.tw.setText(R.string.errorFileOpen);
 				// Assert.assertNotNull ("Error writing the file!", gps.out);
 			} catch (IOException e) {
-				gps.tw.setText("Unable to write loggin file");
+				gps.tw.setText(R.string.errorFileOpen);
 			}
 		}
 		SetButtons((ViewGroup) findViewById(R.id.buttonGroup));

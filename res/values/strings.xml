@@ -33,6 +33,8 @@
     <string name="buttonSep2">-</string>
     <string name="buttonSep3">/</string>
     <string name="buttonStop">Stop Recording</string>
+    <string name="errorFileOpen">Error writing osm file</string>
+    <string name="ready">Ready!</string>
     <string name="waitForGps">Waiting for GPS</string>
 
 </resources>

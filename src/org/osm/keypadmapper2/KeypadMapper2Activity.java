@@ -18,11 +18,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Date;
+import java.util.Calendar;
 import java.util.TimeZone;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -93,11 +95,47 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 			locationLogger.track = null;
 			locationLogger.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 			locationLogger.locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+			
+			String extStorageState = Environment.getExternalStorageState();
+			if (Environment.MEDIA_MOUNTED.equals(extStorageState)) {
+				// We can read and write the media
+			} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(extStorageState)) {
+				// We can only read the media
+				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+				builder.setMessage(R.string.errorStorageRO)
+				       .setCancelable(false)
+				       .setPositiveButton(R.string.quit, new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				                KeypadMapper2Activity.this.exit();
+				           }
+				       });
+				builder.create().show();
+			} else {
+				// Something else is wrong. It may be one of many other states, but all we need to know is we can neither read nor write
+				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+				builder.setMessage(R.string.errorStorageUnavailable)
+				       .setCancelable(false)
+				       .setPositiveButton(R.string.quit, new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				                KeypadMapper2Activity.this.exit();
+				           }
+				       });
+				builder.create().show();
+			}
+			
 			try {
-				File sd = Environment.getExternalStorageDirectory();
-				locationLogger.houseNumbers = new RandomAccessFile(new File(sd, "/" + (new Date()).getTime() + ".osm"), "rw");
+				File extStorage = Environment.getExternalStorageDirectory();
+				File kpmFolder = new File(extStorage.getAbsolutePath()+"/keypadmapper");
+				if (!kpmFolder.exists()){
+					kpmFolder.mkdir();
+				}
+				
+				Calendar cal = Calendar.getInstance();
+				String basename = String.format("%tF_%tH-%tM-%tS", cal, cal, cal, cal);
+				
+				locationLogger.houseNumbers = new RandomAccessFile(new File(kpmFolder, "/" + basename + ".osm"), "rw");
 				locationLogger.houseNumbers.writeBytes("<?xml version='1.0' encoding='UTF-8'?>\n" + "<osm version='0.6' generator='KeypadMapper'>\n</osm>\n");
-				locationLogger.track = new RandomAccessFile(new File(sd, "/" + (new Date()).getTime() + ".gpx"), "rw");
+				locationLogger.track = new RandomAccessFile(new File(kpmFolder, "/" + basename + ".gpx"), "rw");
 				locationLogger.track.writeBytes(
 						"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
 						"<gpx\n" + 
@@ -111,6 +149,7 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 						"</trkseg>\n" +
 						"</trk>\n" +
 						"</gpx>\n");
+				
 			} catch (FileNotFoundException e) {
 				locationLogger.textView.setText(R.string.errorFileOpen);
 			} catch (IOException e) {

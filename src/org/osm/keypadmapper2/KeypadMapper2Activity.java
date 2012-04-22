@@ -29,10 +29,12 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -75,6 +77,13 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 	final boolean wildlife = false;
 	private String val = "";
 	static Gps gps = null;
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.actionmenu, menu);
+		return true;
+	}
 
 	void SetButtons(ViewGroup btnGroup) {
 		for (int i = 0; i < btnGroup.getChildCount(); i++) {
@@ -107,34 +116,26 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 	}
 
 	public void onClick(View v) {
-		if (v == findViewById(R.id.button_Stop)) {
-			gps.wl.release();
-			gps.lm.removeUpdates(gps);
-			gps.record = 0;
-			finish();
-		} else {
-			if (v == findViewById(R.id.button_C)) {
-				val = "";
-			} else if (v == findViewById(R.id.button_DEL)) {
-				if (val.length() > 0)
-					val = val.substring(0, val.length() - 1);
-			} else if (v == findViewById(R.id.button_L)) {
-				Do(0, 25.0 / 111111);
-			} else if (v == findViewById(R.id.button_F)) {
-				Do(50.0 / 111111, 0);
-			} else if (v == findViewById(R.id.button_R)) {
-				Do(0, -25.0 / 111111);
-			} else
-				val = val + v.getTag();
-			gps.tw.setText(val);
-		}
+		if (v == findViewById(R.id.button_C)) {
+			val = "";
+		} else if (v == findViewById(R.id.button_DEL)) {
+			if (val.length() > 0)
+				val = val.substring(0, val.length() - 1);
+		} else if (v == findViewById(R.id.button_L)) {
+			Do(0, 25.0 / 111111);
+		} else if (v == findViewById(R.id.button_F)) {
+			Do(50.0 / 111111, 0);
+		} else if (v == findViewById(R.id.button_R)) {
+			Do(0, -25.0 / 111111);
+		} else
+			val = val + v.getTag();
+		gps.tw.setText(val);
 	}
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.main);
 		if (gps != null)
 			gps.tw = (TextView) findViewById(R.id.text);
@@ -191,5 +192,20 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 	public void onDestroy() {
 		super.onDestroy();
 		gps.tw = null;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle item selection
+		switch (item.getItemId()) {
+		case R.id.actionStop:
+			gps.wl.release();
+			gps.lm.removeUpdates(gps);
+			gps.record = 0;
+			finish();
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
 	}
 }

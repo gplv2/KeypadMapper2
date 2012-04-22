@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string name="actionStop">Stop</string>
     <string name="app_name">Keypadmapper2</string>
     <string name="backspace">Backspace</string>
     <string name="buttonLeft">L</string>
@@ -32,7 +33,6 @@
     <string name="buttonSep1">,</string>
     <string name="buttonSep2">-</string>
     <string name="buttonSep3">/</string>
-    <string name="buttonStop">Stop Recording</string>
     <string name="errorFileOpen">Error writing osm file</string>
     <string name="ready">Ready!</string>
     <string name="waitForGps">Waiting for GPS</string>

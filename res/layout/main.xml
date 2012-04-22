@@ -297,8 +297,6 @@ his requirements in comments until it's clear where his project is heading.
                 android:textSize="30sp" />
         </LinearLayout>
 
-        <!-- Leave a space, making it harder to hit stop -->
-
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -328,21 +326,6 @@ his requirements in comments until it's clear where his project is heading.
                 android:text="@string/buttonSep3"
                 android:textSize="30sp" />
         </LinearLayout>
-
-        <TextView
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical|center_horizontal"
-            android:text=""
-            android:textSize="30sp" />
-
-        <Button
-            android:id="@+id/button_Stop"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/buttonStop"
-            android:textSize="30sp" />
     </LinearLayout>
 
 </ScrollView>

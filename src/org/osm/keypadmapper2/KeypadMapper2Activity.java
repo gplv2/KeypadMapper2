@@ -39,14 +39,14 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-final class Gps implements LocationListener {
-	public PowerManager.WakeLock wl;
+final class LocationLogger implements LocationListener {
+	public PowerManager.WakeLock wakeLock;
 	public double lon = -200, lat, bearing;
 	public int record = 0, osmid = 0;
-	public TextView tw = null;
-	public RandomAccessFile out, osm;
-	public java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-	public LocationManager lm;
+	public TextView textView = null;
+	public RandomAccessFile track, houseNumbers;
+	public java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	public LocationManager locationManager;
 
 	public void onProviderDisabled(String provider) {
 	}
@@ -58,102 +58,47 @@ final class Gps implements LocationListener {
 	}
 
 	public void onLocationChanged(Location location) {
-		if (lon < -180 && tw != null)
-			tw.setText(R.string.ready);
+		if (lon < -180 && textView != null)
+			textView.setText(R.string.ready);
 		lon = location.getLongitude();
 		lat = location.getLatitude();
 		bearing = location.getBearing();
 		try {
-			out.seek(out.getFilePointer() - 24); // Overwrite </trkseg>\n</trk>\n</gpx>\n
-			out.writeBytes("<trkpt lat=\"" + lat + "\" lon=\"" + lon + "\">\n"
+			track.seek(track.getFilePointer() - 24); // Overwrite </trkseg>\n</trk>\n</gpx>\n
+			track.writeBytes("<trkpt lat=\"" + lat + "\" lon=\"" + lon + "\">\n"
 					+ (location.hasAltitude() ? "<ele>" + (int) location.getAltitude() + "</ele>\n" : "") + "<time>"
-					+ (f.format(new java.util.Date(location.getTime()))) + "Z</time>\n</trkpt>\n</trkseg>\n</trk>\n</gpx>\n");
+					+ (dateFormat.format(new java.util.Date(location.getTime()))) + "Z</time>\n</trkpt>\n</trkseg>\n</trk>\n</gpx>\n");
 		} catch (IOException e) {
 		}
 	}
 }
 
 public class KeypadMapper2Activity extends Activity implements OnClickListener {
-	final boolean wildlife = false;
-	private String val = "";
-	static Gps gps = null;
+	private String housenumber = "";
+	static LocationLogger locationLogger = null;
 	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.actionmenu, menu);
-		return true;
-	}
-
-	void SetButtons(ViewGroup btnGroup) {
-		for (int i = 0; i < btnGroup.getChildCount(); i++) {
-			if (ViewGroup.class.isInstance(btnGroup.getChildAt(i))) {
-				SetButtons((ViewGroup) btnGroup.getChildAt(i));
-			} else if (Button.class.isInstance(btnGroup.getChildAt(i))) {
-				Button button = (Button) btnGroup.getChildAt(i);
-				button.setOnClickListener(this);
-			} else if (ImageButton.class.isInstance(btnGroup.getChildAt(i))) {
-				ImageButton imageButton = (ImageButton) btnGroup.getChildAt(i);
-				imageButton.setOnClickListener(this);
-			}
-		}
-	}
-
-	private void Do(double fwd, double left) { // fwd and left are distances in 111111 meter
-		try {
-			gps.osm.seek(gps.osm.getFilePointer() - 7); // Overwrite </osm>\n
-			gps.osm.writeBytes("<node id='"
-					+ --gps.osmid
-					+ "' visible='true' lat='"
-					+ (gps.lat + Math.sin(Math.PI / 180 * gps.bearing) * left + Math.cos(Math.PI / 180 * gps.bearing) * fwd)
-					+ "' lon='"
-					+ (gps.lon + (Math.sin(Math.PI / 180 * gps.bearing) * fwd - Math.cos(Math.PI / 180 * gps.bearing) * left)
-							/ Math.cos(Math.PI / 180 * gps.lat)) + "'>\n <tag k='addr:housenumber' v='" + val + "'/>\n</node>\n</osm>\n");
-			val = "";
-		} catch (IOException e) {
-			val = getString(R.string.errorFileOpen);
-		}
-	}
-
-	public void onClick(View v) {
-		if (v == findViewById(R.id.button_C)) {
-			val = "";
-		} else if (v == findViewById(R.id.button_DEL)) {
-			if (val.length() > 0)
-				val = val.substring(0, val.length() - 1);
-		} else if (v == findViewById(R.id.button_L)) {
-			Do(0, 25.0 / 111111);
-		} else if (v == findViewById(R.id.button_F)) {
-			Do(50.0 / 111111, 0);
-		} else if (v == findViewById(R.id.button_R)) {
-			Do(0, -25.0 / 111111);
-		} else
-			val = val + v.getTag();
-		gps.tw.setText(val);
-	}
-
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		if (gps != null)
-			gps.tw = (TextView) findViewById(R.id.text);
+		if (locationLogger != null)
+			locationLogger.textView = (TextView) findViewById(R.id.text);
 		else {
-			gps = new Gps();
+			locationLogger = new LocationLogger();
 			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-			gps.wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WildlifeSurvey");
-			gps.wl.acquire();
-			gps.tw = (TextView) findViewById(R.id.text);
-			gps.out = null;
-			gps.f.setTimeZone(TimeZone.getTimeZone("UTC"));
-			gps.lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+			locationLogger.wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Key");
+			locationLogger.wakeLock.acquire();
+			locationLogger.textView = (TextView) findViewById(R.id.text);
+			locationLogger.track = null;
+			locationLogger.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+			locationLogger.locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 			try {
 				File sd = Environment.getExternalStorageDirectory();
-				gps.osm = new RandomAccessFile(new File(sd, "/" + (new Date()).getTime() + ".osm"), "rw");
-				gps.osm.writeBytes("<?xml version='1.0' encoding='UTF-8'?>\n" + "<osm version='0.6' generator='KeypadMapper'>\n</osm>\n");
-				gps.out = new RandomAccessFile(new File(sd, "/" + (new Date()).getTime() + ".gpx"), "rw");
-				gps.out.writeBytes(
+				locationLogger.houseNumbers = new RandomAccessFile(new File(sd, "/" + (new Date()).getTime() + ".osm"), "rw");
+				locationLogger.houseNumbers.writeBytes("<?xml version='1.0' encoding='UTF-8'?>\n" + "<osm version='0.6' generator='KeypadMapper'>\n</osm>\n");
+				locationLogger.track = new RandomAccessFile(new File(sd, "/" + (new Date()).getTime() + ".gpx"), "rw");
+				locationLogger.track.writeBytes(
 						"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
 						"<gpx\n" + 
 						"version=\"1.0\"\n" + 
@@ -167,31 +112,31 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 						"</trk>\n" +
 						"</gpx>\n");
 			} catch (FileNotFoundException e) {
-				gps.tw.setText(R.string.errorFileOpen);
-				// Assert.assertNotNull ("Error writing the file!", gps.out);
+				locationLogger.textView.setText(R.string.errorFileOpen);
 			} catch (IOException e) {
-				gps.tw.setText(R.string.errorFileOpen);
+				locationLogger.textView.setText(R.string.errorFileOpen);
 			}
 		}
-		SetButtons((ViewGroup) findViewById(R.id.buttonGroup));
+		setupButtons((ViewGroup) findViewById(R.id.buttonGroup));
 	}
 
 	@Override
 	public void onResume() {
-		gps.tw = (TextView) findViewById(R.id.text);
+		locationLogger.textView = (TextView) findViewById(R.id.text);
 		super.onResume();
-		if (gps.record == 0) {
-			gps.wl.acquire();
-			gps.lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 6f, gps);
-			gps.record = 1;
-			gps.lon = -200;
+		if (locationLogger.record == 0) {
+			locationLogger.wakeLock.acquire();
+			locationLogger.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 6f, locationLogger);
+			locationLogger.record = 1;
+			locationLogger.lon = -200;
 		}
 	}
 
 	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		gps.tw = null;
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.actionmenu, menu);
+		return true;
 	}
 
 	@Override
@@ -199,13 +144,77 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 		// Handle item selection
 		switch (item.getItemId()) {
 		case R.id.actionStop:
-			gps.wl.release();
-			gps.lm.removeUpdates(gps);
-			gps.record = 0;
-			finish();
+			exit();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
+	}
+
+	public void onClick(View v) {
+		switch (v.getId()) {
+		case R.id.button_C:
+			housenumber = "";
+			break;
+		case R.id.button_DEL:
+			if (housenumber.length() > 0)
+				housenumber = housenumber.substring(0, housenumber.length() - 1);
+			break;
+		case R.id.button_L:
+			placeHousenumber(0, 25.0 / 111111);
+			break;
+		case R.id.button_F:
+			placeHousenumber(50.0 / 111111, 0);
+			break;
+		case R.id.button_R:
+			placeHousenumber(0, -25.0 / 111111);
+			break;
+		default:
+			housenumber = housenumber + v.getTag();
+		}
+		locationLogger.textView.setText(housenumber);
+	}
+
+	private void setupButtons(ViewGroup btnGroup) {
+		for (int i = 0; i < btnGroup.getChildCount(); i++) {
+			if (ViewGroup.class.isInstance(btnGroup.getChildAt(i))) {
+				setupButtons((ViewGroup) btnGroup.getChildAt(i));
+			} else if (Button.class.isInstance(btnGroup.getChildAt(i))) {
+				Button button = (Button) btnGroup.getChildAt(i);
+				button.setOnClickListener(this);
+			} else if (ImageButton.class.isInstance(btnGroup.getChildAt(i))) {
+				ImageButton imageButton = (ImageButton) btnGroup.getChildAt(i);
+				imageButton.setOnClickListener(this);
+			}
+		}
+	}
+
+	private void placeHousenumber(double fwd, double left) { // fwd and left are distances in 111111 meter
+		try {
+			locationLogger.houseNumbers.seek(locationLogger.houseNumbers.getFilePointer() - 7); // Overwrite </osm>\n
+			locationLogger.houseNumbers.writeBytes("<node id='"
+					+ --locationLogger.osmid
+					+ "' visible='true' lat='"
+					+ (locationLogger.lat + Math.sin(Math.PI / 180 * locationLogger.bearing) * left + Math.cos(Math.PI / 180 * locationLogger.bearing) * fwd)
+					+ "' lon='"
+					+ (locationLogger.lon + (Math.sin(Math.PI / 180 * locationLogger.bearing) * fwd - Math.cos(Math.PI / 180 * locationLogger.bearing) * left)
+							/ Math.cos(Math.PI / 180 * locationLogger.lat)) + "'>\n <tag k='addr:housenumber' v='" + housenumber + "'/>\n</node>\n</osm>\n");
+			housenumber = "";
+		} catch (IOException e) {
+			housenumber = getString(R.string.errorFileOpen);
+		}
+	}
+	
+	private void exit() {
+		locationLogger.wakeLock.release();
+		locationLogger.locationManager.removeUpdates(locationLogger);
+		locationLogger.record = 0;
+		finish();
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		locationLogger.textView = null;
 	}
 }

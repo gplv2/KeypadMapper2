@@ -20,17 +20,20 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Calendar;
 import java.util.TimeZone;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -75,8 +78,10 @@ final class LocationLogger implements LocationListener {
 	}
 }
 
-public class KeypadMapper2Activity extends Activity implements OnClickListener {
+public class KeypadMapper2Activity extends Activity implements OnClickListener, OnSharedPreferenceChangeListener {
+	private SharedPreferences preferences = null;
 	private String housenumber = "";
+	private double distance = 0;
 	static LocationLogger locationLogger = null;
 	
 	/** Called when the activity is first created. */
@@ -86,7 +91,11 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 		setContentView(R.layout.main);
 		if (locationLogger != null)
 			locationLogger.textView = (TextView) findViewById(R.id.text);
-		else {
+		else {			
+			preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+			preferences.registerOnSharedPreferenceChangeListener(this);
+			distance = new Double(preferences.getString("housenumberDistance", "10"));
+			
 			locationLogger = new LocationLogger();
 			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 			locationLogger.wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Key");
@@ -95,7 +104,7 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 			locationLogger.track = null;
 			locationLogger.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 			locationLogger.locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-			
+
 			String extStorageState = Environment.getExternalStorageState();
 			if (Environment.MEDIA_MOUNTED.equals(extStorageState)) {
 				// We can read and write the media
@@ -185,6 +194,10 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 		case R.id.actionStop:
 			exit();
 			return true;
+		case R.id.actionPreferences:
+			final Intent intent = new Intent(this, Preferences.class);
+			startActivity(intent);
+			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
@@ -200,13 +213,16 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 				housenumber = housenumber.substring(0, housenumber.length() - 1);
 			break;
 		case R.id.button_L:
-			placeHousenumber(0, 25.0 / 111111);
+			placeHousenumber(0, distance / 111111);
+			housenumber = "";
 			break;
 		case R.id.button_F:
-			placeHousenumber(50.0 / 111111, 0);
+			placeHousenumber(distance / 111111, 0);
+			housenumber = "";
 			break;
 		case R.id.button_R:
-			placeHousenumber(0, -25.0 / 111111);
+			placeHousenumber(0, -distance / 111111);
+			housenumber = "";
 			break;
 		default:
 			housenumber = housenumber + v.getTag();
@@ -238,7 +254,6 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 					+ "' lon='"
 					+ (locationLogger.lon + (Math.sin(Math.PI / 180 * locationLogger.bearing) * fwd - Math.cos(Math.PI / 180 * locationLogger.bearing) * left)
 							/ Math.cos(Math.PI / 180 * locationLogger.lat)) + "'>\n <tag k='addr:housenumber' v='" + housenumber + "'/>\n</node>\n</osm>\n");
-			housenumber = "";
 		} catch (IOException e) {
 			housenumber = getString(R.string.errorFileOpen);
 		}
@@ -255,5 +270,12 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener {
 	public void onDestroy() {
 		super.onDestroy();
 		locationLogger.textView = null;
+	}
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		if (key.equals("housenumberDistance")) {
+			distance = new Double(sharedPreferences.getString("housenumberDistance", "10"));
+		}
 	}
 }

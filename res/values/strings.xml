@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string name="actionPreferences">Settings</string>
     <string name="actionStop">Stop</string>
     <string name="app_name">Keypadmapper2</string>
     <string name="backspace">Backspace</string>
@@ -36,6 +37,8 @@
     <string name="errorFileOpen">Error writing osm file</string>
     <string name="errorStorageRO">The external storage is read-only. Keypadmapper needs write access for saving the data you enter.</string>
     <string name="errorStorageUnavailable">The external storage is unavailable. Keypadmapper needs to access it for saving the data you enter.</string>
+    <string name="prefsCategoryDataTitle">Data</string>
+    <string name="prefsDataPlacementDistance">Placement distance</string>
     <string name="quit">Quit</string>
     <string name="ready">Ready!</string>
     <string name="waitForGps">Waiting for GPS</string>

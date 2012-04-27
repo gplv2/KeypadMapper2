@@ -3,7 +3,12 @@
 
     <item
         android:id="@+id/actionStop"
+        android:icon="@drawable/stop"
         android:showAsAction="ifRoom|withText"
-        android:title="@string/actionStop" android:icon="@drawable/stop"/>
+        android:title="@string/actionStop"/>
+    <item
+        android:id="@+id/actionPreferences"
+        android:showAsAction="never"
+        android:title="@string/actionPreferences"/>
 
 </menu>

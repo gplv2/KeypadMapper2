@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/prefsCategoryDataTitle" >
+        <ListPreference
+            android:defaultValue="10"
+            android:entries="@array/prefsDataDistanceEntries"
+            android:entryValues="@array/prefsDataDistanceValues"
+            android:key="housenumberDistance"
+            android:title="@string/prefsDataPlacementDistance" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

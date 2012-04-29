@@ -160,9 +160,25 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener, 
 						"</gpx>\n");
 				
 			} catch (FileNotFoundException e) {
-				locationLogger.textView.setText(R.string.errorFileOpen);
+				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+				builder.setMessage(R.string.errorFileOpen)
+				       .setCancelable(false)
+				       .setNegativeButton(R.string.OK, new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				                KeypadMapper2Activity.this.exit();
+				           }
+				       });
+				builder.create().show();
 			} catch (IOException e) {
-				locationLogger.textView.setText(R.string.errorFileOpen);
+				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+				builder.setMessage(R.string.errorFileOpen)
+				       .setCancelable(false)
+				       .setNegativeButton(R.string.OK, new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				                KeypadMapper2Activity.this.exit();
+				           }
+				       });
+				builder.create().show();
 			}
 		}
 		setupButtons((ViewGroup) findViewById(R.id.buttonGroup));
@@ -255,7 +271,15 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener, 
 					+ (locationLogger.lon + (Math.sin(Math.PI / 180 * locationLogger.bearing) * fwd - Math.cos(Math.PI / 180 * locationLogger.bearing) * left)
 							/ Math.cos(Math.PI / 180 * locationLogger.lat)) + "'>\n <tag k='addr:housenumber' v='" + housenumber + "'/>\n</node>\n</osm>\n");
 		} catch (IOException e) {
-			housenumber = getString(R.string.errorFileOpen);
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setMessage(R.string.errorFileOpen)
+			       .setCancelable(false)
+			       .setNegativeButton(R.string.OK, new DialogInterface.OnClickListener() {
+			           public void onClick(DialogInterface dialog, int id) {
+			                dialog.cancel();
+			           }
+			       });
+			builder.create().show();
 		}
 	}
 	

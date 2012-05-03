@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Calendar;
 import java.util.TimeZone;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -79,6 +80,7 @@ final class LocationLogger implements LocationListener {
 }
 
 public class KeypadMapper2Activity extends Activity implements OnClickListener, OnSharedPreferenceChangeListener {
+	private static final int REQUEST_GPS_ENABLE = 1;
 	private SharedPreferences preferences = null;
 	private String housenumber = "";
 	private double distance = 0;
@@ -94,7 +96,12 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener, 
 		else {			
 			preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 			preferences.registerOnSharedPreferenceChangeListener(this);
-			distance = new Double(preferences.getString("housenumberDistance", "10"));
+			distance = Double.valueOf(preferences.getString("housenumberDistance", "10"));
+			
+			LocationManager locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
+			if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+				showDialogGpsDisabled();
+			}
 			
 			locationLogger = new LocationLogger();
 			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -110,26 +117,10 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener, 
 				// We can read and write the media
 			} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(extStorageState)) {
 				// We can only read the media
-				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-				builder.setMessage(R.string.errorStorageRO)
-				       .setCancelable(false)
-				       .setPositiveButton(R.string.quit, new DialogInterface.OnClickListener() {
-				           public void onClick(DialogInterface dialog, int id) {
-				                KeypadMapper2Activity.this.exit();
-				           }
-				       });
-				builder.create().show();
+				showDialogFatalError(R.string.errorStorageRO);
 			} else {
 				// Something else is wrong. It may be one of many other states, but all we need to know is we can neither read nor write
-				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-				builder.setMessage(R.string.errorStorageUnavailable)
-				       .setCancelable(false)
-				       .setPositiveButton(R.string.quit, new DialogInterface.OnClickListener() {
-				           public void onClick(DialogInterface dialog, int id) {
-				                KeypadMapper2Activity.this.exit();
-				           }
-				       });
-				builder.create().show();
+				showDialogFatalError(R.string.errorStorageUnavailable);
 			}
 			
 			try {
@@ -160,25 +151,9 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener, 
 						"</gpx>\n");
 				
 			} catch (FileNotFoundException e) {
-				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-				builder.setMessage(R.string.errorFileOpen)
-				       .setCancelable(false)
-				       .setNegativeButton(R.string.OK, new DialogInterface.OnClickListener() {
-				           public void onClick(DialogInterface dialog, int id) {
-				                KeypadMapper2Activity.this.exit();
-				           }
-				       });
-				builder.create().show();
+				showDialogFatalError(R.string.errorFileOpen);
 			} catch (IOException e) {
-				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-				builder.setMessage(R.string.errorFileOpen)
-				       .setCancelable(false)
-				       .setNegativeButton(R.string.OK, new DialogInterface.OnClickListener() {
-				           public void onClick(DialogInterface dialog, int id) {
-				                KeypadMapper2Activity.this.exit();
-				           }
-				       });
-				builder.create().show();
+				showDialogFatalError(R.string.errorFileOpen);
 			}
 		}
 		setupButtons((ViewGroup) findViewById(R.id.buttonGroup));
@@ -246,6 +221,33 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener, 
 		locationLogger.textView.setText(housenumber);
 	}
 
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		if (key.equals("housenumberDistance")) {
+			distance = Double.valueOf(sharedPreferences.getString("housenumberDistance", "10"));
+		}
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		locationLogger.textView = null;
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		switch (requestCode) {
+		case REQUEST_GPS_ENABLE:
+			LocationManager locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
+			if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+				showDialogGpsDisabled();
+			}
+			break;
+		default:
+			super.onActivityResult(requestCode, resultCode, data);
+		}
+	}
+
 	private void setupButtons(ViewGroup btnGroup) {
 		for (int i = 0; i < btnGroup.getChildCount(); i++) {
 			if (ViewGroup.class.isInstance(btnGroup.getChildAt(i))) {
@@ -271,15 +273,7 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener, 
 					+ (locationLogger.lon + (Math.sin(Math.PI / 180 * locationLogger.bearing) * fwd - Math.cos(Math.PI / 180 * locationLogger.bearing) * left)
 							/ Math.cos(Math.PI / 180 * locationLogger.lat)) + "'>\n <tag k='addr:housenumber' v='" + housenumber + "'/>\n</node>\n</osm>\n");
 		} catch (IOException e) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setMessage(R.string.errorFileOpen)
-			       .setCancelable(false)
-			       .setNegativeButton(R.string.OK, new DialogInterface.OnClickListener() {
-			           public void onClick(DialogInterface dialog, int id) {
-			                dialog.cancel();
-			           }
-			       });
-			builder.create().show();
+			showDialogFatalError(R.string.errorFileOpen);
 		}
 	}
 	
@@ -290,16 +284,32 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener, 
 		finish();
 	}
 
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		locationLogger.textView = null;
+	private void showDialogGpsDisabled() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setMessage(R.string.errorGpsDisabled)
+			.setCancelable(false)
+			.setNegativeButton(R.string.quit, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					KeypadMapper2Activity.this.exit();
+				}
+			})
+			.setPositiveButton(R.string.systemSettings, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					startActivityForResult(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS), REQUEST_GPS_ENABLE);
+				}
+		});
+		builder.create().show();
 	}
 
-	@Override
-	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-		if (key.equals("housenumberDistance")) {
-			distance = new Double(sharedPreferences.getString("housenumberDistance", "10"));
-		}
+	private void showDialogFatalError(int messageId) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setMessage(messageId)
+			.setCancelable(false)
+			.setNegativeButton(R.string.quit, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int id) {
+					KeypadMapper2Activity.this.exit();
+				}
+		});
+		builder.create().show();
 	}
 }

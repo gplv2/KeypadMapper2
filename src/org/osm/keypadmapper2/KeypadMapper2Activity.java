@@ -19,7 +19,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TimeZone;
+
+import org.osm.keypadmapper2.KeypadFragment.KeypadInterface;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -38,21 +43,16 @@ import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.TextView;
+import android.widget.Toast;
 
 final class LocationLogger implements LocationListener {
 	public PowerManager.WakeLock wakeLock;
 	public double lon = -200, lat, bearing;
 	public int record = 0, osmid = 0;
-	public TextView textView = null;
 	public RandomAccessFile track, houseNumbers;
 	public java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 	public LocationManager locationManager;
+	public KeypadFragment keypadFragment;
 
 	public void onProviderDisabled(String provider) {
 	}
@@ -64,8 +64,10 @@ final class LocationLogger implements LocationListener {
 	}
 
 	public void onLocationChanged(Location location) {
-		if (lon < -180 && textView != null)
-			textView.setText(R.string.ready);
+		if (lon < -180)
+			if (keypadFragment != null) {
+				keypadFragment.setStatus(R.string.ready);
+			}
 		lon = location.getLongitude();
 		lat = location.getLatitude();
 		bearing = location.getBearing();
@@ -79,90 +81,85 @@ final class LocationLogger implements LocationListener {
 	}
 }
 
-public class KeypadMapper2Activity extends Activity implements OnClickListener, OnSharedPreferenceChangeListener {
+public class KeypadMapper2Activity extends Activity implements OnSharedPreferenceChangeListener, KeypadInterface {
 	private static final int REQUEST_GPS_ENABLE = 1;
 	private SharedPreferences preferences = null;
-	private String housenumber = "";
-	private double distance = 0;
-	static LocationLogger locationLogger = null;
+	private LocationLogger locationLogger = null;
+	private HashMap<String, String> address;
 	
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		if (locationLogger != null)
-			locationLogger.textView = (TextView) findViewById(R.id.text);
-		else {			
-			preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-			preferences.registerOnSharedPreferenceChangeListener(this);
-			distance = Double.valueOf(preferences.getString("housenumberDistance", "10"));
-			
-			LocationManager locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
-			if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-				showDialogGpsDisabled();
-			}
-			
-			locationLogger = new LocationLogger();
-			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-			locationLogger.wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Key");
-			locationLogger.wakeLock.acquire();
-			locationLogger.textView = (TextView) findViewById(R.id.text);
-			locationLogger.track = null;
-			locationLogger.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-			locationLogger.locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+		preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		preferences.registerOnSharedPreferenceChangeListener(this);
+		address = new HashMap<String, String>();
 
-			String extStorageState = Environment.getExternalStorageState();
-			if (Environment.MEDIA_MOUNTED.equals(extStorageState)) {
-				// We can read and write the media
-			} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(extStorageState)) {
-				// We can only read the media
-				showDialogFatalError(R.string.errorStorageRO);
-			} else {
-				// Something else is wrong. It may be one of many other states, but all we need to know is we can neither read nor write
-				showDialogFatalError(R.string.errorStorageUnavailable);
-			}
-			
-			try {
-				File extStorage = Environment.getExternalStorageDirectory();
-				File kpmFolder = new File(extStorage.getAbsolutePath()+"/keypadmapper");
-				if (!kpmFolder.exists()){
-					kpmFolder.mkdir();
-				}
-				
-				Calendar cal = Calendar.getInstance();
-				String basename = String.format("%tF_%tH-%tM-%tS", cal, cal, cal, cal);
-				
-				locationLogger.houseNumbers = new RandomAccessFile(new File(kpmFolder, "/" + basename + ".osm"), "rw");
-				locationLogger.houseNumbers.writeBytes("<?xml version='1.0' encoding='UTF-8'?>\n" + "<osm version='0.6' generator='KeypadMapper'>\n</osm>\n");
-				locationLogger.track = new RandomAccessFile(new File(kpmFolder, "/" + basename + ".gpx"), "rw");
-				locationLogger.track.writeBytes(
-						"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
-						"<gpx\n" + 
-						"version=\"1.0\"\n" + 
-						"creator=\"KeypadMapper\"\n" + 
-						"xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" + 
-						"xmlns=\"http://www.topografix.com/GPX/1/0\"\n"	+ 
-						"xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">\n" + 
-						"<trk>\n" + 
-						"<trkseg>\n" +
-						"</trkseg>\n" +
-						"</trk>\n" +
-						"</gpx>\n");
-				
-			} catch (FileNotFoundException e) {
-				showDialogFatalError(R.string.errorFileOpen);
-			} catch (IOException e) {
-				showDialogFatalError(R.string.errorFileOpen);
-			}
+		LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+		if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+			showDialogGpsDisabled();
 		}
-		setupButtons((ViewGroup) findViewById(R.id.buttonGroup));
+
+		locationLogger = new LocationLogger();
+		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		locationLogger.wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Key");
+		locationLogger.wakeLock.acquire();
+		locationLogger.track = null;
+		locationLogger.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		locationLogger.locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+		locationLogger.keypadFragment = (KeypadFragment) getFragmentManager().findFragmentById(R.id.fragment_keypad);
+
+		String extStorageState = Environment.getExternalStorageState();
+		if (Environment.MEDIA_MOUNTED.equals(extStorageState)) {
+			// We can read and write the media
+		} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(extStorageState)) {
+			// We can only read the media
+			showDialogFatalError(R.string.errorStorageRO);
+		} else {
+			// Something else is wrong. It may be one of many other states, but all we need to know is we can neither read nor write
+			showDialogFatalError(R.string.errorStorageUnavailable);
+		}
+
+		try {
+			File extStorage = Environment.getExternalStorageDirectory();
+			File kpmFolder = new File(extStorage.getAbsolutePath() + "/keypadmapper");
+			if (!kpmFolder.exists()) {
+				kpmFolder.mkdir();
+			}
+
+			Calendar cal = Calendar.getInstance();
+			String basename = String.format("%tF_%tH-%tM-%tS", cal, cal, cal, cal);
+			
+			Toast.makeText(getApplicationContext(), getText(R.string.writeToNewFile) + " " + basename, Toast.LENGTH_LONG).show();
+
+			locationLogger.houseNumbers = new RandomAccessFile(new File(kpmFolder, "/" + basename + ".osm"), "rw");
+			locationLogger.houseNumbers.writeBytes("<?xml version='1.0' encoding='UTF-8'?>\n" + "<osm version='0.6' generator='KeypadMapper'>\n</osm>\n");
+			locationLogger.track = new RandomAccessFile(new File(kpmFolder, "/" + basename + ".gpx"), "rw");
+			locationLogger.track.writeBytes(
+					"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
+					"<gpx\n" + 
+					"version=\"1.0\"\n" + 
+					"creator=\"KeypadMapper\"\n" + 
+					"xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" + 
+					"xmlns=\"http://www.topografix.com/GPX/1/0\"\n" +
+					"xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">\n" + 
+					"<trk>\n" + 
+					"<trkseg>\n" + 
+					"</trkseg>\n" + 
+					"</trk>\n" + 
+					"</gpx>\n");
+
+		} catch (FileNotFoundException e) {
+			showDialogFatalError(R.string.errorFileOpen);
+		} catch (IOException e) {
+			showDialogFatalError(R.string.errorFileOpen);
+		}
 	}
 
 	@Override
 	public void onResume() {
-		locationLogger.textView = (TextView) findViewById(R.id.text);
-		super.onResume();
+			super.onResume();
 		if (locationLogger.record == 0) {
 			locationLogger.wakeLock.acquire();
 			locationLogger.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 6f, locationLogger);
@@ -194,44 +191,20 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener, 
 		}
 	}
 
-	public void onClick(View v) {
-		switch (v.getId()) {
-		case R.id.button_C:
-			housenumber = "";
-			break;
-		case R.id.button_DEL:
-			if (housenumber.length() > 0)
-				housenumber = housenumber.substring(0, housenumber.length() - 1);
-			break;
-		case R.id.button_L:
-			placeHousenumber(0, distance / 111111);
-			housenumber = "";
-			break;
-		case R.id.button_F:
-			placeHousenumber(distance / 111111, 0);
-			housenumber = "";
-			break;
-		case R.id.button_R:
-			placeHousenumber(0, -distance / 111111);
-			housenumber = "";
-			break;
-		default:
-			housenumber = housenumber + v.getTag();
-		}
-		locationLogger.textView.setText(housenumber);
-	}
-
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals("housenumberDistance")) {
-			distance = Double.valueOf(sharedPreferences.getString("housenumberDistance", "10"));
+			KeypadFragment keypadFragment = (KeypadFragment) getFragmentManager().findFragmentById(R.id.fragment_keypad);
+			if (keypadFragment != null) {
+				double distance = Double.valueOf(preferences.getString("housenumberDistance", "10"));
+				keypadFragment.setPlacementDistance(distance);
+			}
 		}
 	}
 
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		locationLogger.textView = null;
 	}
 
 	@Override
@@ -248,35 +221,44 @@ public class KeypadMapper2Activity extends Activity implements OnClickListener, 
 		}
 	}
 
-	private void setupButtons(ViewGroup btnGroup) {
-		for (int i = 0; i < btnGroup.getChildCount(); i++) {
-			if (ViewGroup.class.isInstance(btnGroup.getChildAt(i))) {
-				setupButtons((ViewGroup) btnGroup.getChildAt(i));
-			} else if (Button.class.isInstance(btnGroup.getChildAt(i))) {
-				Button button = (Button) btnGroup.getChildAt(i);
-				button.setOnClickListener(this);
-			} else if (ImageButton.class.isInstance(btnGroup.getChildAt(i))) {
-				ImageButton imageButton = (ImageButton) btnGroup.getChildAt(i);
-				imageButton.setOnClickListener(this);
-			}
+	@Override
+	public void onHousenumberChanged(String newHousenumber) {
+		if (newHousenumber.isEmpty()) {
+			address.remove("addr:housenumber");
+		} else {
+			address.put("addr:housenumber", newHousenumber);
 		}
 	}
 
-	private void placeHousenumber(double fwd, double left) { // fwd and left are distances in 111111 meter
-		try {
-			locationLogger.houseNumbers.seek(locationLogger.houseNumbers.getFilePointer() - 7); // Overwrite </osm>\n
-			locationLogger.houseNumbers.writeBytes("<node id='"
-					+ --locationLogger.osmid
-					+ "' visible='true' lat='"
-					+ (locationLogger.lat + Math.sin(Math.PI / 180 * locationLogger.bearing) * left + Math.cos(Math.PI / 180 * locationLogger.bearing) * fwd)
-					+ "' lon='"
-					+ (locationLogger.lon + (Math.sin(Math.PI / 180 * locationLogger.bearing) * fwd - Math.cos(Math.PI / 180 * locationLogger.bearing) * left)
-							/ Math.cos(Math.PI / 180 * locationLogger.lat)) + "'>\n <tag k='addr:housenumber' v='" + housenumber + "'/>\n</node>\n</osm>\n");
-		} catch (IOException e) {
-			showDialogFatalError(R.string.errorFileOpen);
+	@Override
+	public void onAddressNodePlaced(double forward, double left) { // fwd and left are distances in meter
+		if(address.containsKey("addr:housenumber")){
+			forward /= 111111;
+			left /= 111111;
+			try {
+				locationLogger.houseNumbers.seek(locationLogger.houseNumbers.getFilePointer() - 7); // Overwrite </osm>\n
+				locationLogger.houseNumbers.writeBytes("<node id='"
+						+ --locationLogger.osmid
+						+ "' visible='true' lat='"
+						+ (locationLogger.lat + Math.sin(Math.PI / 180 * locationLogger.bearing) * left + Math.cos(Math.PI / 180 * locationLogger.bearing) * forward)
+						+ "' lon='"
+						+ (locationLogger.lon + (Math.sin(Math.PI / 180 * locationLogger.bearing) * forward - Math.cos(Math.PI / 180 * locationLogger.bearing) * left)
+								/ Math.cos(Math.PI / 180 * locationLogger.lat)) + "'>\n");
+				for (Entry<String, String> entry : address.entrySet()) {
+					locationLogger.houseNumbers.writeBytes(" <tag k='" + entry.getKey() + "' v='" + entry.getValue() + "'/>\n");
+				}
+				locationLogger.houseNumbers.writeBytes( "</node>\n</osm>\n");
+			} catch (IOException e) {
+				showDialogFatalError(R.string.errorFileOpen);
+			}
 		}
 	}
 	
+	@Override
+	public Map<String, String> getAddress() {
+		return address;
+	}
+
 	private void exit() {
 		locationLogger.wakeLock.release();
 		locationLogger.locationManager.removeUpdates(locationLogger);

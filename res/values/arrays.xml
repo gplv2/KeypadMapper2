@@ -12,6 +12,7 @@
         <item>25 m</item>
     </string-array>
     <string-array name="prefsDataDistanceValues">
+
         <!-- string-array instead of integer-array because of http://code.google.com/p/android/issues/detail?id=2096 -->
         <item>1</item>
         <item>2</item>

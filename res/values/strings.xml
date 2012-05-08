@@ -45,5 +45,12 @@
     <string name="ready">Ready!</string>
     <string name="systemSettings">Settings</string>
     <string name="waitForGps">Waiting for GPS</string>
+    <string name="writeToNewFile">Writing to new file</string>
+    <string name="Housenumber">Housenumber</string>
+    <string name="Housename">Housename</string>
+    <string name="Street">Street</string>
+    <string name="Postcode">Postcode</string>
+    <string name="City">City</string>
+    <string name="Countrycode">Country code</string>
 
 </resources>

@@ -24,10 +24,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimeZone;
 
-import org.osm.keypadmapper2.KeypadFragment.KeypadInterface;
-
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ActionBar.OnNavigationListener;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -43,6 +46,8 @@ import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
 final class LocationLogger implements LocationListener {
@@ -66,7 +71,7 @@ final class LocationLogger implements LocationListener {
 	public void onLocationChanged(Location location) {
 		if (lon < -180)
 			if (keypadFragment != null) {
-				keypadFragment.setStatus(R.string.ready);
+				keypadFragment.setLocationStatus(R.string.ready);
 			}
 		lon = location.getLongitude();
 		lat = location.getLatitude();
@@ -81,11 +86,14 @@ final class LocationLogger implements LocationListener {
 	}
 }
 
-public class KeypadMapper2Activity extends Activity implements OnSharedPreferenceChangeListener, KeypadInterface {
+public class KeypadMapper2Activity extends Activity implements OnSharedPreferenceChangeListener, OnNavigationListener, AddressInterface {
 	private static final int REQUEST_GPS_ENABLE = 1;
 	private SharedPreferences preferences = null;
 	private LocationLogger locationLogger = null;
 	private HashMap<String, String> address;
+	private enum State{keypad, settings, extended};
+	private State state;
+	public String LocationStatus;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -95,6 +103,21 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		preferences.registerOnSharedPreferenceChangeListener(this);
 		address = new HashMap<String, String>();
+		
+		FragmentManager fragmentManager = getFragmentManager();
+		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+		Fragment keypadFragment = new KeypadFragment();
+		fragmentTransaction.replace(R.id.fragment_container, keypadFragment);
+		fragmentTransaction.commit();
+		
+		state = State.keypad;
+		
+		SpinnerAdapter fragmentSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.fragmentSelectorSpinnerEntries,
+				android.R.layout.simple_spinner_dropdown_item);
+		ActionBar actionBar = getActionBar();
+		actionBar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+		actionBar.setListNavigationCallbacks(fragmentSpinnerAdapter, this);		
 
 		LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -222,6 +245,47 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	}
 
 	@Override
+	public boolean onNavigationItemSelected(int itemPosition, long itemId) {
+		boolean ret;
+		FragmentManager fragmentManager = getFragmentManager();
+		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+		switch (itemPosition) {
+		case 0: // keypad
+			if (state != State.keypad) {
+				Fragment keypadFragment = new KeypadFragment();
+				fragmentTransaction.replace(R.id.fragment_container, keypadFragment);
+				state = State.keypad;
+			}
+			ret = true;
+			break;
+		case 1: // extended address editor
+			if (state != State.extended) {
+				Fragment extendedAddressFragment = new ExtendedAddressFragment();
+				fragmentTransaction.replace(R.id.fragment_container, extendedAddressFragment);
+				state = State.extended;
+			}
+			ret = true;
+			break;
+		default:
+			ret = false;
+		}
+		fragmentTransaction.commit();
+
+		return ret;
+	}
+
+	@Override
+	public void onAddressChanged(Map<String, String> newAddress) {
+		for (Entry<String, String> entry : newAddress.entrySet()) {
+			if (entry.getValue().isEmpty()) {
+				address.remove(entry.getKey());
+			} else {
+				address.put(entry.getKey(), entry.getValue());
+			}
+		}
+	}
+
+	@Override
 	public void onHousenumberChanged(String newHousenumber) {
 		if (newHousenumber.isEmpty()) {
 			address.remove("addr:housenumber");
@@ -231,7 +295,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	}
 
 	@Override
-	public void onAddressNodePlaced(double forward, double left) { // fwd and left are distances in meter
+	public void onAddressNodePlacedRelative(double forward, double left) { // fwd and left are distances in meter
 		if(address.containsKey("addr:housenumber")){
 			forward /= 111111;
 			left /= 111111;

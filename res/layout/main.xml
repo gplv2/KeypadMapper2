@@ -19,10 +19,4 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
-    <fragment
-        android:id="@+id/fragment_keypad"
-        android:name="org.osm.keypadmapper2.KeypadFragment"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
 </ScrollView>

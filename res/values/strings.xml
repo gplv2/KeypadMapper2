@@ -52,5 +52,7 @@
     <string name="Postcode">Postcode</string>
     <string name="City">City</string>
     <string name="Countrycode">Country code</string>
+    <string name="Keypad">Keypad</string>
+    <string name="AddressEditor">Address editor</string>
 
 </resources>

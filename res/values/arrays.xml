@@ -23,5 +23,9 @@
         <item>20</item>
         <item>25</item>
     </string-array>
+    <string-array name="fragmentSelectorSpinnerEntries">
+        <item>@string/Keypad</item>
+        <item>@string/AddressEditor</item>
+    </string-array>
 
 </resources>

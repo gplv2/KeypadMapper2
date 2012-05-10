@@ -1,5 +1,6 @@
 package org.osm.keypadmapper2;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import android.app.Activity;
@@ -22,37 +23,16 @@ public class KeypadFragment extends Fragment implements OnClickListener {
 	private TextView textHousename;
 	private TextView textHousenumber;
 	private double distance;
-	private KeypadInterface keypadCallback;
-
-	public interface KeypadInterface {
-		/**
-		 * Called when the user changes the housenumber.
-		 * @param newHousenumber Currently entered housenumber.
-		 */
-		public void onHousenumberChanged(String newHousenumber);
-
-		/**
-		 * Called then the user indicates where the address node should be placed.
-		 * @param forward Forward distance in meters
-		 * @param left Distance to the left in meters, negative if the node is to be placed to the right
-		 */
-		public void onAddressNodePlaced(double forward, double left);
-
-		/**
-		 * Called to get the complete address details entered in another fragment.
-		 * @return Map containing the address tags and their values using the addr:* scheme
-		 */
-		public Map<String, String> getAddress();
-	}
+	private AddressInterface addressCallback;
 
 	@Override
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
 
 		try {
-			keypadCallback = (KeypadInterface) activity;
+			addressCallback = (AddressInterface) activity;
 		} catch (ClassCastException e) {
-			throw new ClassCastException(activity.toString() + "must implement KeypadInterface");
+			throw new ClassCastException(activity.toString() + "must implement AddressInterface");
 		}
 	}
 
@@ -71,17 +51,17 @@ public class KeypadFragment extends Fragment implements OnClickListener {
 		textStreet = (TextView) view.findViewById(R.id.text_street);
 		textHousename = (TextView) view.findViewById(R.id.text_housename);
 		textHousenumber = (TextView) view.findViewById(R.id.text_housenumber);
-		setupButtons((ViewGroup) view.findViewById(R.id.buttonGroup));
+		setupButtons((ViewGroup) view.findViewById(R.id.fragment_keypad));
 		return view;
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
-		Map<String, String> address = keypadCallback.getAddress();
-		textStreet.setText((String) address.get("addr:street"));
-		textHousename.setText((String) address.get("addr:housename"));
-		textHousenumber.setText((String) address.get("addr:housenumber"));
+		Map<String, String> address = addressCallback.getAddress();
+		textStreet.setText(address.get("addr:street"));
+		textHousename.setText(address.get("addr:housename"));
+		textHousenumber.setText(address.get("addr:housenumber"));
 	}
 
 	@Override
@@ -96,7 +76,7 @@ public class KeypadFragment extends Fragment implements OnClickListener {
 		case R.id.button_C:
 			// clear
 			textHousenumber.setText("");
-			keypadCallback.onHousenumberChanged("");
+			addressCallback.onHousenumberChanged("");
 			break;
 		case R.id.button_DEL: {
 			// delete the last char
@@ -104,34 +84,31 @@ public class KeypadFragment extends Fragment implements OnClickListener {
 			if (housenumber.length() > 0) {
 				housenumber = housenumber.substring(0, housenumber.length() - 1);
 				textHousenumber.setText(housenumber);
-				keypadCallback.onHousenumberChanged(housenumber);
+				addressCallback.onHousenumberChanged(housenumber);
 			}
 			break;
 		}
 		case R.id.button_L:
 			// place address to the left
-			keypadCallback.onAddressNodePlaced(0, distance);
-			textHousenumber.setText("");
-			keypadCallback.onHousenumberChanged("");
+			addressCallback.onAddressNodePlacedRelative(0, distance);
+			clearVolatileTags();
 			break;
 		case R.id.button_F:
 			// place address forwards
-			keypadCallback.onAddressNodePlaced(distance, 0);
-			textHousenumber.setText("");
-			keypadCallback.onHousenumberChanged("");
+			addressCallback.onAddressNodePlacedRelative(distance, 0);
+			clearVolatileTags();
 			break;
 		case R.id.button_R:
 			// place address to the right
-			keypadCallback.onAddressNodePlaced(0, -distance);
-			textHousenumber.setText("");
-			keypadCallback.onHousenumberChanged("");
+			addressCallback.onAddressNodePlacedRelative(0, -distance);
+			clearVolatileTags();
 			break;
 		default:
 			// all other buttons are used to add characters
 			String housenumber = (String) textHousenumber.getText();
 			housenumber += v.getTag();
 			textHousenumber.setText(housenumber);
-			keypadCallback.onHousenumberChanged(housenumber);
+			addressCallback.onHousenumberChanged(housenumber);
 		}
 	}
 
@@ -155,7 +132,7 @@ public class KeypadFragment extends Fragment implements OnClickListener {
 	 * Sets the status line to display the specified message.
 	 * @param resid ID of a string resource to use as status message
 	 */
-	public void setStatus(int resid) {
+	public void setLocationStatus(int resid) {
 		textStatus.setText(resid);
 	}
 
@@ -181,5 +158,18 @@ public class KeypadFragment extends Fragment implements OnClickListener {
 				viewGroup.getChildAt(i).setOnClickListener(this);
 			}
 		}
+	}
+
+	/**
+	 * Clears all volatile tags after placing an address node. At the moment housenumber and housename are cleared.
+	 * May be changed at a later time.
+	 */
+	private void clearVolatileTags() {
+		textHousenumber.setText("");
+		textHousename.setText("");
+		HashMap<String, String> newAddress = new HashMap<String, String>();
+		newAddress.put("addr:housenumber", "");
+		newAddress.put("addr:housename", "");
+		addressCallback.onAddressChanged(newAddress);
 	}
 }

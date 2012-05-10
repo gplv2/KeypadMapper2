@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fragment_extended_address"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/input_desc_housenumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/Housenumber" />
+
+    <EditText
+        android:id="@+id/input_housenumber"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="@string/Housenumber"
+        android:singleLine="true" >
+
+        <requestFocus />
+    </EditText>
+
+    <TextView
+        android:id="@+id/input_desc_housename"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/Housename" />
+
+    <EditText
+        android:id="@+id/input_housename"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="@string/Housename"
+        android:singleLine="true" />
+
+    <TextView
+        android:id="@+id/input_desc_street"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/Street" />
+
+    <EditText
+        android:id="@+id/input_street"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="@string/Street"
+        android:singleLine="true" />
+
+    <TextView
+        android:id="@+id/input_desc_postcode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/Postcode" />
+
+    <EditText
+        android:id="@+id/input_postcode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="@string/Postcode"
+        android:singleLine="true" />
+
+    <TextView
+        android:id="@+id/input_desc_city"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/City" />
+
+    <EditText
+        android:id="@+id/input_city"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="@string/City"
+        android:singleLine="true" />
+
+    <TextView
+        android:id="@+id/input_desc_country"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/Countrycode" />
+
+    <EditText
+        android:id="@+id/input_country"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="@string/Countrycode"
+        android:singleLine="true" />
+
+</LinearLayout>

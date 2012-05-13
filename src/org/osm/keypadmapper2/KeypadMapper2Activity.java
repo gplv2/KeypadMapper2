@@ -126,7 +126,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 
 		locationLogger = new LocationLogger();
 		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		locationLogger.wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Key");
+		locationLogger.wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeypadMapper");
 		locationLogger.wakeLock.acquire();
 		locationLogger.track = null;
 		locationLogger.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));

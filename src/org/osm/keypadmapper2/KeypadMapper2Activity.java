@@ -203,7 +203,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		// Handle item selection
 		switch (item.getItemId()) {
 		case R.id.actionStop:
-			exit();
+			finish();
 			return true;
 		case R.id.actionPreferences:
 			final Intent intent = new Intent(this, Preferences.class);
@@ -227,6 +227,9 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 
 	@Override
 	public void onDestroy() {
+		locationLogger.wakeLock.release();
+		locationLogger.locationManager.removeUpdates(locationLogger);
+		locationLogger.record = 0;
 		super.onDestroy();
 	}
 
@@ -323,20 +326,13 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		return address;
 	}
 
-	private void exit() {
-		locationLogger.wakeLock.release();
-		locationLogger.locationManager.removeUpdates(locationLogger);
-		locationLogger.record = 0;
-		finish();
-	}
-
 	private void showDialogGpsDisabled() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setMessage(R.string.errorGpsDisabled)
 			.setCancelable(false)
 			.setNegativeButton(R.string.quit, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
-					KeypadMapper2Activity.this.exit();
+					finish();
 				}
 			})
 			.setPositiveButton(R.string.systemSettings, new DialogInterface.OnClickListener() {
@@ -353,7 +349,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 			.setCancelable(false)
 			.setNegativeButton(R.string.quit, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int id) {
-					KeypadMapper2Activity.this.exit();
+					finish();
 				}
 		});
 		builder.create().show();

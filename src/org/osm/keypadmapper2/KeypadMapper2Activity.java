@@ -88,6 +88,9 @@ final class LocationLogger implements LocationListener {
 
 public class KeypadMapper2Activity extends Activity implements OnSharedPreferenceChangeListener, OnNavigationListener, AddressInterface {
 	private static final int REQUEST_GPS_ENABLE = 1;
+	// order of entries in R.array.fragmentSelectorSpinnerEntries
+	private static final int NAVIGATION_ITEM_KEYPAD = 0;
+	private static final int NAVIGATION_ITEM_EXTENDED = 1;
 	private SharedPreferences preferences = null;
 	private LocationLogger locationLogger = null;
 	private HashMap<String, String> address;
@@ -253,7 +256,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		FragmentManager fragmentManager = getFragmentManager();
 		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 		switch (itemPosition) {
-		case 0: // keypad
+		case NAVIGATION_ITEM_KEYPAD: // keypad
 			if (state != State.keypad) {
 				Fragment keypadFragment = new KeypadFragment();
 				fragmentTransaction.replace(R.id.fragment_container, keypadFragment);
@@ -261,7 +264,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 			}
 			ret = true;
 			break;
-		case 1: // extended address editor
+		case NAVIGATION_ITEM_EXTENDED: // extended address editor
 			if (state != State.extended) {
 				Fragment extendedAddressFragment = new ExtendedAddressFragment();
 				fragmentTransaction.replace(R.id.fragment_container, extendedAddressFragment);

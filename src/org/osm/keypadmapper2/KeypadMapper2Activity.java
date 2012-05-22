@@ -17,17 +17,15 @@ package org.osm.keypadmapper2;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TimeZone;
 
 import android.app.ActionBar;
+import android.app.ActionBar.OnNavigationListener;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ActionBar.OnNavigationListener;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -53,11 +51,11 @@ import android.widget.Toast;
 final class LocationLogger implements LocationListener {
 	public PowerManager.WakeLock wakeLock;
 	public double lon = -200, lat, bearing;
-	public int record = 0, osmid = 0;
-	public RandomAccessFile track, houseNumbers;
-	public java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	public int record = 0;
 	public LocationManager locationManager;
 	public KeypadFragment keypadFragment;
+	public GpxWriter trackWriter = null;
+	public OsmWriter osmWriter = null;
 
 	public void onProviderDisabled(String provider) {
 	}
@@ -77,10 +75,11 @@ final class LocationLogger implements LocationListener {
 		lat = location.getLatitude();
 		bearing = location.getBearing();
 		try {
-			track.seek(track.getFilePointer() - 24); // Overwrite </trkseg>\n</trk>\n</gpx>\n
-			track.writeBytes("<trkpt lat=\"" + lat + "\" lon=\"" + lon + "\">\n"
-					+ (location.hasAltitude() ? "<ele>" + (int) location.getAltitude() + "</ele>\n" : "") + "<time>"
-					+ (dateFormat.format(new java.util.Date(location.getTime()))) + "Z</time>\n</trkpt>\n</trkseg>\n</trk>\n</gpx>\n");
+			if (location.hasAltitude()) {
+				trackWriter.addTrackpoint(location.getLatitude(), location.getLongitude(), location.getAltitude());
+			} else {
+				trackWriter.addTrackpoint(location.getLatitude(), location.getLongitude());
+			}
 		} catch (IOException e) {
 		}
 	}
@@ -94,10 +93,14 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	private SharedPreferences preferences = null;
 	private LocationLogger locationLogger = null;
 	private HashMap<String, String> address;
-	private enum State{keypad, settings, extended};
+
+	private enum State {
+		keypad, settings, extended
+	};
+
 	private State state;
 	public String LocationStatus;
-	
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -106,21 +109,21 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		preferences.registerOnSharedPreferenceChangeListener(this);
 		address = new HashMap<String, String>();
-		
+
 		FragmentManager fragmentManager = getFragmentManager();
 		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 		Fragment keypadFragment = new KeypadFragment();
 		fragmentTransaction.replace(R.id.fragment_container, keypadFragment);
 		fragmentTransaction.commit();
-		
+
 		state = State.keypad;
-		
+
 		SpinnerAdapter fragmentSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.fragmentSelectorSpinnerEntries,
 				android.R.layout.simple_spinner_dropdown_item);
 		ActionBar actionBar = getActionBar();
 		actionBar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
 		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
-		actionBar.setListNavigationCallbacks(fragmentSpinnerAdapter, this);		
+		actionBar.setListNavigationCallbacks(fragmentSpinnerAdapter, this);
 
 		LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -131,8 +134,6 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 		locationLogger.wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeypadMapper");
 		locationLogger.wakeLock.acquire();
-		locationLogger.track = null;
-		locationLogger.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		locationLogger.locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		locationLogger.keypadFragment = (KeypadFragment) getFragmentManager().findFragmentById(R.id.fragment_keypad);
 
@@ -156,36 +157,23 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 
 			Calendar cal = Calendar.getInstance();
 			String basename = String.format("%tF_%tH-%tM-%tS", cal, cal, cal, cal);
-			
+
 			Toast.makeText(getApplicationContext(), getText(R.string.writeToNewFile) + " " + basename, Toast.LENGTH_LONG).show();
 
-			locationLogger.houseNumbers = new RandomAccessFile(new File(kpmFolder, "/" + basename + ".osm"), "rw");
-			locationLogger.houseNumbers.writeBytes("<?xml version='1.0' encoding='UTF-8'?>\n" + "<osm version='0.6' generator='KeypadMapper'>\n</osm>\n");
-			locationLogger.track = new RandomAccessFile(new File(kpmFolder, "/" + basename + ".gpx"), "rw");
-			locationLogger.track.writeBytes(
-					"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
-					"<gpx\n" + 
-					"version=\"1.0\"\n" + 
-					"creator=\"KeypadMapper\"\n" + 
-					"xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" + 
-					"xmlns=\"http://www.topografix.com/GPX/1/0\"\n" +
-					"xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">\n" + 
-					"<trk>\n" + 
-					"<trkseg>\n" + 
-					"</trkseg>\n" + 
-					"</trk>\n" + 
-					"</gpx>\n");
-
+			locationLogger.trackWriter = new GpxWriter(kpmFolder + "/" + basename + ".gpx", false);
+			locationLogger.osmWriter = new OsmWriter(kpmFolder + "/" + basename + ".osm", false);
 		} catch (FileNotFoundException e) {
 			showDialogFatalError(R.string.errorFileOpen);
 		} catch (IOException e) {
 			showDialogFatalError(R.string.errorFileOpen);
+		} catch (FileFormatException e) {
+			// will not be thrown
 		}
 	}
 
 	@Override
 	public void onResume() {
-			super.onResume();
+		super.onResume();
 		if (locationLogger.record == 0) {
 			locationLogger.wakeLock.acquire();
 			locationLogger.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 6f, locationLogger);
@@ -233,6 +221,16 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		locationLogger.wakeLock.release();
 		locationLogger.locationManager.removeUpdates(locationLogger);
 		locationLogger.record = 0;
+		try {
+			if (locationLogger.trackWriter != null) {
+				locationLogger.trackWriter.close();
+			}
+			if (locationLogger.osmWriter != null) {
+				locationLogger.osmWriter.close();
+			}
+		} catch (IOException e) {
+			// should not happen, the file may be damaged anyway.
+		}
 		super.onDestroy();
 	}
 
@@ -240,8 +238,8 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch (requestCode) {
 		case REQUEST_GPS_ENABLE:
-			LocationManager locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
-			if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+			LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+			if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 				showDialogGpsDisabled();
 			}
 			break;
@@ -302,28 +300,22 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 
 	@Override
 	public void onAddressNodePlacedRelative(double forward, double left) { // fwd and left are distances in meter
-		if(address.containsKey("addr:housenumber")){
+		if (address.containsKey("addr:housenumber")) {
 			forward /= 111111;
 			left /= 111111;
+			double lat = (locationLogger.lat + Math.sin(Math.PI / 180 * locationLogger.bearing) * left + Math.cos(Math.PI / 180 * locationLogger.bearing)
+					* forward);
+			double lon = (locationLogger.lon + (Math.sin(Math.PI / 180 * locationLogger.bearing) * forward - Math.cos(Math.PI / 180 * locationLogger.bearing)
+					* left)
+					/ Math.cos(Math.PI / 180 * locationLogger.lat));
 			try {
-				locationLogger.houseNumbers.seek(locationLogger.houseNumbers.getFilePointer() - 7); // Overwrite </osm>\n
-				locationLogger.houseNumbers.writeBytes("<node id='"
-						+ --locationLogger.osmid
-						+ "' visible='true' lat='"
-						+ (locationLogger.lat + Math.sin(Math.PI / 180 * locationLogger.bearing) * left + Math.cos(Math.PI / 180 * locationLogger.bearing) * forward)
-						+ "' lon='"
-						+ (locationLogger.lon + (Math.sin(Math.PI / 180 * locationLogger.bearing) * forward - Math.cos(Math.PI / 180 * locationLogger.bearing) * left)
-								/ Math.cos(Math.PI / 180 * locationLogger.lat)) + "'>\n");
-				for (Entry<String, String> entry : address.entrySet()) {
-					locationLogger.houseNumbers.writeBytes(" <tag k='" + entry.getKey() + "' v='" + entry.getValue() + "'/>\n");
-				}
-				locationLogger.houseNumbers.writeBytes( "</node>\n</osm>\n");
+				locationLogger.osmWriter.addNode(lat, lon, address);
 			} catch (IOException e) {
 				showDialogFatalError(R.string.errorFileOpen);
 			}
 		}
 	}
-	
+
 	@Override
 	public Map<String, String> getAddress() {
 		return address;

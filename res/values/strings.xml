@@ -54,5 +54,6 @@
     <string name="Countrycode">Country code</string>
     <string name="Keypad">Keypad</string>
     <string name="AddressEditor">Address editor</string>
+    <string name="FolderCreationFailed">The folder storing the data on the external storage could not be created.</string>
 
 </resources>

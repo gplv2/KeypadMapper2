@@ -93,6 +93,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	private SharedPreferences preferences = null;
 	private LocationLogger locationLogger = null;
 	private HashMap<String, String> address;
+	private String basename;
 
 	private enum State {
 		keypad, settings, extended
@@ -105,19 +106,11 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
 		preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		preferences.registerOnSharedPreferenceChangeListener(this);
 		address = new HashMap<String, String>();
 
-		FragmentManager fragmentManager = getFragmentManager();
-		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-		Fragment keypadFragment = new KeypadFragment();
-		fragmentTransaction.replace(R.id.fragment_container, keypadFragment);
-		fragmentTransaction.commit();
-
-		state = State.keypad;
-
+		setContentView(R.layout.main);
 		SpinnerAdapter fragmentSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.fragmentSelectorSpinnerEntries,
 				android.R.layout.simple_spinner_dropdown_item);
 		ActionBar actionBar = getActionBar();
@@ -125,18 +118,13 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
 		actionBar.setListNavigationCallbacks(fragmentSpinnerAdapter, this);
 
+		// check for GPS
 		LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 			showDialogGpsDisabled();
 		}
 
-		locationLogger = new LocationLogger();
-		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		locationLogger.wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeypadMapper");
-		locationLogger.wakeLock.acquire();
-		locationLogger.locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-		locationLogger.keypadFragment = (KeypadFragment) getFragmentManager().findFragmentById(R.id.fragment_keypad);
-
+		// check for external storage
 		String extStorageState = Environment.getExternalStorageState();
 		if (Environment.MEDIA_MOUNTED.equals(extStorageState)) {
 			// We can read and write the media
@@ -148,27 +136,101 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 			showDialogFatalError(R.string.errorStorageUnavailable);
 		}
 
-		try {
-			File extStorage = Environment.getExternalStorageDirectory();
-			File kpmFolder = new File(extStorage.getAbsolutePath() + "/keypadmapper");
-			if (!kpmFolder.exists()) {
-				kpmFolder.mkdir();
+		File extStorage = Environment.getExternalStorageDirectory();
+		File kpmFolder = new File(extStorage.getAbsolutePath() + "/keypadmapper");
+		if (!kpmFolder.exists()) {
+			if (!kpmFolder.mkdir()) {
+				showDialogFatalError(R.string.FolderCreationFailed);
 			}
-
-			Calendar cal = Calendar.getInstance();
-			String basename = String.format("%tF_%tH-%tM-%tS", cal, cal, cal, cal);
-
-			Toast.makeText(getApplicationContext(), getText(R.string.writeToNewFile) + " " + basename, Toast.LENGTH_LONG).show();
-
-			locationLogger.trackWriter = new GpxWriter(kpmFolder + "/" + basename + ".gpx", false);
-			locationLogger.osmWriter = new OsmWriter(kpmFolder + "/" + basename + ".osm", false);
-		} catch (FileNotFoundException e) {
-			showDialogFatalError(R.string.errorFileOpen);
-		} catch (IOException e) {
-			showDialogFatalError(R.string.errorFileOpen);
-		} catch (FileFormatException e) {
-			// will not be thrown
 		}
+
+		locationLogger = new LocationLogger();
+		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		locationLogger.wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeypadMapper");
+		locationLogger.wakeLock.acquire();
+		locationLogger.locationManager = locationManager;
+
+		if (savedInstanceState == null) {
+			// first start
+			state = State.keypad;
+
+			try {
+				Calendar cal = Calendar.getInstance();
+				basename = String.format("%tF_%tH-%tM-%tS", cal, cal, cal, cal);
+
+				Toast.makeText(getApplicationContext(), getText(R.string.writeToNewFile) + " " + basename, Toast.LENGTH_LONG).show();
+
+				locationLogger.trackWriter = new GpxWriter(kpmFolder + "/" + basename + ".gpx", false);
+				locationLogger.osmWriter = new OsmWriter(kpmFolder + "/" + basename + ".osm", false);
+			} catch (FileNotFoundException e) {
+				showDialogFatalError(R.string.errorFileOpen);
+			} catch (IOException e) {
+				showDialogFatalError(R.string.errorFileOpen);
+			}
+		} else {
+			// restart
+			state = State.values()[savedInstanceState.getInt("state", State.keypad.ordinal())];
+			basename = savedInstanceState.getString("basename");
+
+			address.put("addr:housenumber", savedInstanceState.getString("housenumber"));
+			address.put("addr:housename", savedInstanceState.getString("housename"));
+			address.put("addr:street", savedInstanceState.getString("street"));
+			address.put("addr:postcode", savedInstanceState.getString("postcode"));
+			address.put("addr:city", savedInstanceState.getString("city"));
+			address.put("addr:country", savedInstanceState.getString("country"));
+
+			try {
+				locationLogger.trackWriter = new GpxWriter(kpmFolder + "/" + basename + ".gpx", true);
+				locationLogger.osmWriter = new OsmWriter(kpmFolder + "/" + basename + ".osm", true);
+			} catch (FileNotFoundException e) {
+				if (locationLogger.trackWriter != null) {
+					try {
+						locationLogger.trackWriter.close();
+					} catch (IOException e1) {
+						showDialogFatalError(R.string.errorFileOpen);
+					}
+				}
+				if (locationLogger.osmWriter != null) {
+					try {
+						locationLogger.osmWriter.close();
+					} catch (IOException e1) {
+						showDialogFatalError(R.string.errorFileOpen);
+					}
+				}
+				Calendar cal = Calendar.getInstance();
+				basename = String.format("%tF_%tH-%tM-%tS", cal, cal, cal, cal);
+
+				Toast.makeText(getApplicationContext(), getText(R.string.writeToNewFile) + " " + basename, Toast.LENGTH_LONG).show();
+
+				try {
+					locationLogger.trackWriter = new GpxWriter(kpmFolder + "/" + basename + ".gpx", false);
+					locationLogger.osmWriter = new OsmWriter(kpmFolder + "/" + basename + ".osm", false);
+				} catch (IOException e1) {
+					showDialogFatalError(R.string.errorFileOpen);
+				}
+			} catch (IOException e) {
+				showDialogFatalError(R.string.errorFileOpen);
+			}
+		}
+
+		FragmentManager fragmentManager = getFragmentManager();
+		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+		Fragment mainFragment;
+		switch (state) {
+		case extended:
+			mainFragment = new ExtendedAddressFragment();
+			actionBar.setSelectedNavigationItem(NAVIGATION_ITEM_EXTENDED);
+			break;
+		default:
+		case keypad:
+			mainFragment = new KeypadFragment();
+			actionBar.setSelectedNavigationItem(NAVIGATION_ITEM_KEYPAD);
+			break;
+		}
+		fragmentTransaction.replace(R.id.fragment_container, mainFragment);
+		fragmentTransaction.commit();
+
+		locationLogger.keypadFragment = (KeypadFragment) getFragmentManager().findFragmentById(R.id.fragment_keypad);
 	}
 
 	@Override
@@ -180,6 +242,52 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 			locationLogger.record = 1;
 			locationLogger.lon = -200;
 		}
+	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		outState.putInt("state", state.ordinal());
+		outState.putString("basename", basename);
+		outState.putString("housenumber", address.get("addr:housenumber"));
+		outState.putString("housename", address.get("addr:housename"));
+		outState.putString("street", address.get("addr:street"));
+		outState.putString("postcode", address.get("addr:postcode"));
+		outState.putString("city", address.get("addr:city"));
+		outState.putString("country", address.get("addr:country"));
+		super.onSaveInstanceState(outState);
+	}
+
+	@Override
+	protected void onPause() {
+		try {
+			if (locationLogger.trackWriter != null) {
+				locationLogger.trackWriter.flush();
+			}
+			if (locationLogger.osmWriter != null) {
+				locationLogger.osmWriter.flush();
+			}
+		} catch (IOException e) {
+			// something is going horribly wrong. no way out.
+		}
+		super.onPause();
+	}
+
+	@Override
+	public void onDestroy() {
+		locationLogger.wakeLock.release();
+		locationLogger.locationManager.removeUpdates(locationLogger);
+		locationLogger.record = 0;
+		try {
+			if (locationLogger.trackWriter != null) {
+				locationLogger.trackWriter.close();
+			}
+			if (locationLogger.osmWriter != null) {
+				locationLogger.osmWriter.close();
+			}
+		} catch (IOException e) {
+			// should not happen, the file may be damaged anyway.
+		}
+		super.onDestroy();
 	}
 
 	@Override
@@ -214,24 +322,6 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 				keypadFragment.setPlacementDistance(distance);
 			}
 		}
-	}
-
-	@Override
-	public void onDestroy() {
-		locationLogger.wakeLock.release();
-		locationLogger.locationManager.removeUpdates(locationLogger);
-		locationLogger.record = 0;
-		try {
-			if (locationLogger.trackWriter != null) {
-				locationLogger.trackWriter.close();
-			}
-			if (locationLogger.osmWriter != null) {
-				locationLogger.osmWriter.close();
-			}
-		} catch (IOException e) {
-			// should not happen, the file may be damaged anyway.
-		}
-		super.onDestroy();
 	}
 
 	@Override

@@ -27,7 +27,7 @@ public class OsmWriter {
 	 * @throws IOException if any other I/O error occurs
 	 * @throws FileFormatException if the end of the OSM file is not as expected
 	 */
-	public OsmWriter(String path, boolean append) throws IOException, FileFormatException {
+	public OsmWriter(String path, boolean append) throws IOException {
 		if (!append) {
 			// create/overwrite file
 			osmFile = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path), "UTF-8"));
@@ -98,5 +98,9 @@ public class OsmWriter {
 	@Override
 	public String toString() {
 		return path;
+	}
+
+	public void flush() throws IOException {
+		osmFile.flush();
 	}
 }

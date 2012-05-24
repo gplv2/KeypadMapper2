@@ -1,22 +1,12 @@
 package org.osm.keypadmapper2;
 
-public class FileFormatException extends Exception {
+import java.io.FileNotFoundException;
 
-	private static final long serialVersionUID = 1L;
+public class FileFormatException extends FileNotFoundException {
+
+	private static final long serialVersionUID = -4144500561579539416L;
 
 	public FileFormatException() {
 		super();
-	}
-
-	public FileFormatException(String detailMessage, Throwable throwable) {
-		super(detailMessage, throwable);
-	}
-
-	public FileFormatException(String detailMessage) {
-		super(detailMessage);
-	}
-
-	public FileFormatException(Throwable throwable) {
-		super(throwable);
 	}
 }

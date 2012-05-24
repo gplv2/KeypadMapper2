@@ -25,7 +25,7 @@ public class GpxWriter {
 	 * @throws IOException if any other I/O error occurs
 	 * @throws FileFormatException if the end of the GPX file is not as expected
 	 */
-	public GpxWriter(String path, boolean append) throws IOException, FileFormatException {
+	public GpxWriter(String path, boolean append) throws IOException {
 		if (!append) {
 			// create/overwrite file
 			gpxFile = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path), "UTF-8"));
@@ -153,5 +153,9 @@ public class GpxWriter {
 	@Override
 	public String toString() {
 		return path;
+	}
+
+	public void flush() throws IOException {
+		gpxFile.flush();
 	}
 }

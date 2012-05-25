@@ -316,11 +316,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals("housenumberDistance")) {
-			KeypadFragment keypadFragment = (KeypadFragment) getFragmentManager().findFragmentById(R.id.fragment_keypad);
-			if (keypadFragment != null) {
-				double distance = Double.valueOf(preferences.getString("housenumberDistance", "10"));
-				keypadFragment.setPlacementDistance(distance);
-			}
+			// keypadfragment will fetch the distance itself when resuming
 		}
 	}
 

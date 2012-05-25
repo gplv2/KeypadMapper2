@@ -38,8 +38,6 @@ public class KeypadFragment extends Fragment implements OnClickListener {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		distance = Double.valueOf(preferences.getString("housenumberDistance", "10"));
 		super.onCreate(savedInstanceState);
 	}
 
@@ -58,6 +56,8 @@ public class KeypadFragment extends Fragment implements OnClickListener {
 	@Override
 	public void onResume() {
 		super.onResume();
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		distance = Double.valueOf(preferences.getString("housenumberDistance", "10"));
 		Map<String, String> address = addressCallback.getAddress();
 		textStreet.setText(address.get("addr:street"));
 		textHousename.setText(address.get("addr:housename"));

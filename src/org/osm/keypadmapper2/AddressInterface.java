@@ -28,4 +28,10 @@ public interface AddressInterface {
 	 * @return Map containing the address tags and their values using the addr:* scheme
 	 */
 	public Map<String, String> getAddress();
+	
+	/**
+	 * Called to get the current location status.
+	 * @return Location status string
+	 */
+	public String getLocationStatus();
 }

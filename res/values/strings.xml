@@ -42,7 +42,7 @@
     <string name="prefsCategoryDataTitle">Data</string>
     <string name="prefsDataPlacementDistance">Placement distance</string>
     <string name="quit">Quit</string>
-    <string name="ready">Ready!</string>
+    <string name="ready">Ready</string>
     <string name="systemSettings">Settings</string>
     <string name="waitForGps">Waiting for GPS</string>
     <string name="writeToNewFile">Writing to new file</string>

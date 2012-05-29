@@ -62,6 +62,7 @@ public class KeypadFragment extends Fragment implements OnClickListener {
 		textStreet.setText(address.get("addr:street"));
 		textHousename.setText(address.get("addr:housename"));
 		textHousenumber.setText(address.get("addr:housenumber"));
+		textStatus.setText(addressCallback.getLocationStatus());
 	}
 
 	@Override

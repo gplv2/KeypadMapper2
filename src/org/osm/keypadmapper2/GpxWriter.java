@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 public class GpxWriter {
 	private BufferedWriter gpxFile;
@@ -98,33 +99,39 @@ public class GpxWriter {
 	}
 
 	/**
-	 * Adds a new trackpoint to the track. The current time will be used.
+	 * Adds a new trackpoint to the track.
 	 * @param lat current WGS84 latitude
 	 * @param lon current WGS84 longitude
+	 * @param time UTC time of the fix in ms since 1970-01-01
 	 * @throws IOException if an I/O error occurs
 	 */
-	public void addTrackpoint(double lat, double lon) throws IOException {
+	public void addTrackpoint(double lat, double lon, long time) throws IOException {
 		Calendar cal = Calendar.getInstance();
-		String time = String.format("%tFT%tTZ", cal, cal);
+		cal.setTimeInMillis(time);
+		cal.setTimeZone(TimeZone.getTimeZone("UTC"));
+		String timeString = String.format("%tFT%tTZ", cal, cal);
 
 		gpxFile.write("\t\t\t<trkpt lat=\"" + lat + "\" lon=\"" + lon + "\">\n");
-		gpxFile.write("\t\t\t\t<time>" + time + "</time>\n");
+		gpxFile.write("\t\t\t\t<time>" + timeString + "</time>\n");
 		gpxFile.write("\t\t\t</trkpt>\n");
 	}
 
 	/**
-	 * Adds a new trackpoint to the track. The current time will be used.
+	 * Adds a new trackpoint to the track.
 	 * @param lat current WGS84 latitude
 	 * @param lon current WGS84 longitude
+	 * @param time UTC time of the fix in ms since 1970-01-01 
 	 * @param ele current height
 	 * @throws IOException if an I/O error occurs
 	 */
-	public void addTrackpoint(double lat, double lon, double ele) throws IOException {
+	public void addTrackpoint(double lat, double lon, long time, double ele) throws IOException {
 		Calendar cal = Calendar.getInstance();
-		String time = String.format("%tFT%tTZ", cal, cal);
+		cal.setTimeInMillis(time);
+		cal.setTimeZone(TimeZone.getTimeZone("UTC"));
+		String timeString = String.format("%tFT%tTZ", cal, cal);
 
 		gpxFile.write("\t\t\t<trkpt lat=\"" + lat + "\" lon=\"" + lon + "\">\n");
-		gpxFile.write("\t\t\t\t<time>" + time + "</time>\n");
+		gpxFile.write("\t\t\t\t<time>" + timeString + "</time>\n");
 		gpxFile.write("\t\t\t\t<ele>" + ele + "</ele>\n");
 		gpxFile.write("\t\t\t</trkpt>\n");
 	}

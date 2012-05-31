@@ -188,14 +188,15 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		case extended:
 			mainFragment = new ExtendedAddressFragment();
 			actionBar.setSelectedNavigationItem(NAVIGATION_ITEM_EXTENDED);
+			fragmentTransaction.add(R.id.fragment_container, mainFragment, "address_editor");
 			break;
 		default:
 		case keypad:
 			mainFragment = new KeypadFragment();
 			actionBar.setSelectedNavigationItem(NAVIGATION_ITEM_KEYPAD);
+			fragmentTransaction.add(R.id.fragment_container, mainFragment, "keypad");
 			break;
 		}
-		fragmentTransaction.replace(R.id.fragment_container, mainFragment);
 		fragmentTransaction.commit();
 
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, locationUpdateMinTimeMs, locationUpdateMinDistance, this);
@@ -304,7 +305,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		case NAVIGATION_ITEM_KEYPAD: // keypad
 			if (state != State.keypad) {
 				Fragment keypadFragment = new KeypadFragment();
-				fragmentTransaction.replace(R.id.fragment_container, keypadFragment);
+				fragmentTransaction.replace(R.id.fragment_container, keypadFragment, "keypad");
 				state = State.keypad;
 			}
 			ret = true;
@@ -312,7 +313,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		case NAVIGATION_ITEM_EXTENDED: // extended address editor
 			if (state != State.extended) {
 				Fragment extendedAddressFragment = new ExtendedAddressFragment();
-				fragmentTransaction.replace(R.id.fragment_container, extendedAddressFragment);
+				fragmentTransaction.replace(R.id.fragment_container, extendedAddressFragment, "address_editor");
 				state = State.extended;
 			}
 			ret = true;
@@ -356,7 +357,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		}
 		locationStatus = getString(R.string.ready) + ", " + location.getAccuracy() + "m";
 		if (state == State.keypad) {
-			KeypadFragment keypadFragment = (KeypadFragment) getFragmentManager().findFragmentById(R.id.fragment_keypad);
+			KeypadFragment keypadFragment = (KeypadFragment) getFragmentManager().findFragmentByTag("keypad");
 			if (keypadFragment != null) {
 				keypadFragment.setStatus(locationStatus);
 			}

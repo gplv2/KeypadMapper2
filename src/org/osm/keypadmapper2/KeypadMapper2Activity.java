@@ -34,9 +34,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.location.GpsSatellite;
+import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.GpsStatus.Listener;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
@@ -48,7 +51,7 @@ import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
-public class KeypadMapper2Activity extends Activity implements OnSharedPreferenceChangeListener, OnNavigationListener, AddressInterface, LocationListener {
+public class KeypadMapper2Activity extends Activity implements OnSharedPreferenceChangeListener, OnNavigationListener, AddressInterface, LocationListener, Listener {
 	private static final int REQUEST_GPS_ENABLE = 1;
 	// order of entries in R.array.fragmentSelectorSpinnerEntries
 	private static final int NAVIGATION_ITEM_KEYPAD = 0;
@@ -200,6 +203,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		fragmentTransaction.commit();
 
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, locationUpdateMinTimeMs, locationUpdateMinDistance, this);
+		locationManager.addGpsStatusListener(this);
 	}
 
 	@Override
@@ -324,6 +328,34 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		fragmentTransaction.commit();
 
 		return ret;
+	}
+
+	@Override
+	public void onGpsStatusChanged(int event) {
+		switch (event) {
+		case GpsStatus.GPS_EVENT_STARTED:
+			break;
+		case GpsStatus.GPS_EVENT_STOPPED:
+			break;
+		case GpsStatus.GPS_EVENT_FIRST_FIX:
+			break;
+		case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
+			GpsStatus gpsStatus = locationManager.getGpsStatus(null);
+			int maxSats = 0;
+			int usedSats = 0;
+			Iterable<GpsSatellite> gpsSatellites = gpsStatus.getSatellites();
+			for (GpsSatellite sat : gpsSatellites) {
+				maxSats++;
+				if (sat.usedInFix()) {
+					usedSats++;
+				}
+			}
+			KeypadFragment keypadFragment = (KeypadFragment) getFragmentManager().findFragmentByTag("keypad");
+			if (keypadFragment != null) {
+				keypadFragment.setSatCount(usedSats, maxSats);
+			}
+			break;
+		}
 	}
 
 	@Override

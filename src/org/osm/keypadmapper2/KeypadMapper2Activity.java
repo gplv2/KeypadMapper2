@@ -29,20 +29,18 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
+import android.location.GpsStatus.Listener;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.GpsStatus.Listener;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -65,7 +63,6 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	private GpxWriter trackWriter = null;
 	private OsmWriter osmWriter = null;
 	private Location location;
-	private PowerManager.WakeLock wakeLock;
 
 	private enum State {
 		keypad, settings, extended
@@ -116,10 +113,6 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 				showDialogFatalError(R.string.FolderCreationFailed);
 			}
 		}
-
-		PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeypadMapper");
-		wakeLock.acquire();
 
 		if (savedInstanceState == null) {
 			// first start
@@ -241,7 +234,6 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 
 	@Override
 	public void onDestroy() {
-		wakeLock.release();
 		locationManager.removeUpdates(this);
 		try {
 			if (trackWriter != null) {

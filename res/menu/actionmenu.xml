@@ -3,12 +3,13 @@
 
     <item
         android:id="@+id/actionStop"
-        android:icon="@drawable/stop"
-        android:showAsAction="ifRoom|withText"
         android:title="@string/actionStop"/>
     <item
+        android:id="@+id/modeSwitcher"
+        android:title="@string/AddressEditor">
+    </item>
+    <item
         android:id="@+id/actionPreferences"
-        android:showAsAction="never"
         android:title="@string/actionPreferences"/>
 
 </menu>

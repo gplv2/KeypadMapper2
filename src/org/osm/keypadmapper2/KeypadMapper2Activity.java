@@ -22,13 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import android.app.ActionBar;
-import android.app.ActionBar.OnNavigationListener;
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -42,6 +36,10 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -49,7 +47,7 @@ import android.widget.ArrayAdapter;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
-public class KeypadMapper2Activity extends Activity implements OnSharedPreferenceChangeListener, OnNavigationListener, AddressInterface, LocationListener, Listener {
+public class KeypadMapper2Activity extends FragmentActivity implements OnSharedPreferenceChangeListener, AddressInterface, LocationListener, Listener {
 	private static final int REQUEST_GPS_ENABLE = 1;
 	// order of entries in R.array.fragmentSelectorSpinnerEntries
 	private static final int NAVIGATION_ITEM_KEYPAD = 0;
@@ -80,12 +78,6 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		locationStatus = getString(R.string.waitForGps);
 
 		setContentView(R.layout.main);
-		SpinnerAdapter fragmentSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.fragmentSelectorSpinnerEntries,
-				android.R.layout.simple_spinner_dropdown_item);
-		ActionBar actionBar = getActionBar();
-		actionBar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
-		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
-		actionBar.setListNavigationCallbacks(fragmentSpinnerAdapter, this);
 
 		// check for GPS
 		locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -177,19 +169,17 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 			}
 		}
 
-		FragmentManager fragmentManager = getFragmentManager();
+		FragmentManager fragmentManager = getSupportFragmentManager();
 		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 		Fragment mainFragment;
 		switch (state) {
 		case extended:
 			mainFragment = new ExtendedAddressFragment();
-			actionBar.setSelectedNavigationItem(NAVIGATION_ITEM_EXTENDED);
 			fragmentTransaction.add(R.id.fragment_container, mainFragment, "address_editor");
 			break;
 		default:
 		case keypad:
 			mainFragment = new KeypadFragment();
-			actionBar.setSelectedNavigationItem(NAVIGATION_ITEM_KEYPAD);
 			fragmentTransaction.add(R.id.fragment_container, mainFragment, "keypad");
 			break;
 		}
@@ -256,6 +246,17 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	}
 
 	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		MenuItem modeSwitcher = menu.findItem(R.id.modeSwitcher);
+		if (state == State.keypad) {
+			modeSwitcher.setTitle(R.string.AddressEditor);
+		} else {
+			modeSwitcher.setTitle(R.string.Keypad);
+		}
+		return super.onPrepareOptionsMenu(menu);
+	}
+
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle item selection
 		switch (item.getItemId()) {
@@ -265,6 +266,24 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		case R.id.actionPreferences:
 			final Intent intent = new Intent(this, Preferences.class);
 			startActivity(intent);
+			return true;
+		case R.id.modeSwitcher:
+			FragmentManager fragmentManager = getSupportFragmentManager();
+			FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+			if(state==State.keypad){
+				// switch to address editor
+				Fragment extendedAddressFragment = new ExtendedAddressFragment();
+				fragmentTransaction.replace(R.id.fragment_container, extendedAddressFragment, "address_editor");
+				state = State.extended;
+				item.setTitle(R.string.Keypad);
+			} else {
+				//switch back to keypad
+				Fragment keypadFragment = new KeypadFragment();
+				fragmentTransaction.replace(R.id.fragment_container, keypadFragment, "keypad");
+				state = State.keypad;
+				item.setTitle(R.string.AddressEditor);
+			}
+			fragmentTransaction.commit();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
@@ -293,36 +312,6 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	}
 
 	@Override
-	public boolean onNavigationItemSelected(int itemPosition, long itemId) {
-		boolean ret;
-		FragmentManager fragmentManager = getFragmentManager();
-		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-		switch (itemPosition) {
-		case NAVIGATION_ITEM_KEYPAD: // keypad
-			if (state != State.keypad) {
-				Fragment keypadFragment = new KeypadFragment();
-				fragmentTransaction.replace(R.id.fragment_container, keypadFragment, "keypad");
-				state = State.keypad;
-			}
-			ret = true;
-			break;
-		case NAVIGATION_ITEM_EXTENDED: // extended address editor
-			if (state != State.extended) {
-				Fragment extendedAddressFragment = new ExtendedAddressFragment();
-				fragmentTransaction.replace(R.id.fragment_container, extendedAddressFragment, "address_editor");
-				state = State.extended;
-			}
-			ret = true;
-			break;
-		default:
-			ret = false;
-		}
-		fragmentTransaction.commit();
-
-		return ret;
-	}
-
-	@Override
 	public void onGpsStatusChanged(int event) {
 		switch (event) {
 		case GpsStatus.GPS_EVENT_STARTED:
@@ -342,7 +331,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 					usedSats++;
 				}
 			}
-			KeypadFragment keypadFragment = (KeypadFragment) getFragmentManager().findFragmentByTag("keypad");
+			KeypadFragment keypadFragment = (KeypadFragment) getSupportFragmentManager().findFragmentByTag("keypad");
 			if (keypadFragment != null) {
 				keypadFragment.setSatCount(usedSats, maxSats);
 			}
@@ -381,7 +370,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		}
 		locationStatus = getString(R.string.ready) + ", " + location.getAccuracy() + "m";
 		if (state == State.keypad) {
-			KeypadFragment keypadFragment = (KeypadFragment) getFragmentManager().findFragmentByTag("keypad");
+			KeypadFragment keypadFragment = (KeypadFragment) getSupportFragmentManager().findFragmentByTag("keypad");
 			if (keypadFragment != null) {
 				keypadFragment.setStatus(locationStatus);
 			}
@@ -391,7 +380,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	@Override
 	public void onAddressChanged(Map<String, String> newAddress) {
 		for (Entry<String, String> entry : newAddress.entrySet()) {
-			if (entry.getValue().isEmpty()) {
+			if (entry.getValue().length() == 0) {
 				address.remove(entry.getKey());
 			} else {
 				address.put(entry.getKey(), entry.getValue());
@@ -401,7 +390,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 
 	@Override
 	public void onHousenumberChanged(String newHousenumber) {
-		if (newHousenumber.isEmpty()) {
+		if (newHousenumber.length() == 0) {
 			address.remove("addr:housenumber");
 		} else {
 			address.put("addr:housenumber", newHousenumber);

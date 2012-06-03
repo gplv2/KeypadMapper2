@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/fragment_extended_address"
-    android:layout_width="match_parent"
+    android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical" >
 
@@ -13,7 +13,7 @@
 
     <EditText
         android:id="@+id/input_housenumber"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/Housenumber"
@@ -30,7 +30,7 @@
 
     <EditText
         android:id="@+id/input_housename"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/Housename"
@@ -44,7 +44,7 @@
 
     <EditText
         android:id="@+id/input_street"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/Street"
@@ -58,7 +58,7 @@
 
     <EditText
         android:id="@+id/input_postcode"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/Postcode"
@@ -72,7 +72,7 @@
 
     <EditText
         android:id="@+id/input_city"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/City"
@@ -86,7 +86,7 @@
 
     <EditText
         android:id="@+id/input_country"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/Countrycode"

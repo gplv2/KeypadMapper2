@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="@string/Housenumber"
+        android:hint="addr:housenumber"
         android:singleLine="true" >
 
         <requestFocus />
@@ -33,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="@string/Housename"
+        android:hint="addr:housename"
         android:singleLine="true" />
 
     <TextView
@@ -47,7 +47,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="@string/Street"
+        android:hint="addr:street"
         android:singleLine="true" />
 
     <TextView
@@ -61,7 +61,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="@string/Postcode"
+        android:hint="addr:postcode"
         android:singleLine="true" />
 
     <TextView
@@ -75,7 +75,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="@string/City"
+        android:hint="addr:city"
         android:singleLine="true" />
 
     <TextView
@@ -89,7 +89,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="@string/Countrycode"
+        android:hint="addr:country"
         android:singleLine="true" />
 
 </LinearLayout>

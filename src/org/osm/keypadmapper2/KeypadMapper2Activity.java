@@ -379,7 +379,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 			}
 		} catch (IOException e) {
 		}
-		locationStatus = getString(R.string.ready) + ", " + location.getAccuracy() + "m";
+		locationStatus = getString(R.string.statusReadyString, location.getAccuracy());
 		if (state == State.keypad) {
 			KeypadFragment keypadFragment = (KeypadFragment) getFragmentManager().findFragmentByTag("keypad");
 			if (keypadFragment != null) {

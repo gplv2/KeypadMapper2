@@ -143,7 +143,7 @@ public class KeypadFragment extends Fragment implements OnClickListener {
 	 * @param maxSats Number of visible satellites.
 	 */
 	public void setSatCount(int usedSats, int maxSats) {
-		textSatCount.setText(String.format("%d/%d", usedSats, maxSats));
+		textSatCount.setText(getString(R.string.satString, usedSats, maxSats));
 	}
 
 	/**

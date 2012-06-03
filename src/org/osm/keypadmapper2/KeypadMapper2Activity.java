@@ -368,7 +368,7 @@ public class KeypadMapper2Activity extends FragmentActivity implements OnSharedP
 			}
 		} catch (IOException e) {
 		}
-		locationStatus = getString(R.string.ready) + ", " + location.getAccuracy() + "m";
+		locationStatus = getString(R.string.statusReadyString, location.getAccuracy());
 		if (state == State.keypad) {
 			KeypadFragment keypadFragment = (KeypadFragment) getSupportFragmentManager().findFragmentByTag("keypad");
 			if (keypadFragment != null) {

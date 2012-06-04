@@ -204,7 +204,7 @@ public class KeypadMapper2Activity extends FragmentActivity implements OnSharedP
 		outState.putString("postcode", address.get("addr:postcode"));
 		outState.putString("city", address.get("addr:city"));
 		outState.putString("country", address.get("addr:country"));
-		FragmentManager fragmentManager = getFragmentManager();
+		FragmentManager fragmentManager = getSupportFragmentManager();
 		Fragment fragment = null;
 		switch (state) {
 		case keypad:

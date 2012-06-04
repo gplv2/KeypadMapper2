@@ -214,6 +214,17 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 		outState.putString("postcode", address.get("addr:postcode"));
 		outState.putString("city", address.get("addr:city"));
 		outState.putString("country", address.get("addr:country"));
+		FragmentManager fragmentManager = getFragmentManager();
+		Fragment fragment = null;
+		switch (state) {
+		case keypad:
+			fragment = fragmentManager.findFragmentByTag("keypad");
+			break;
+		case extended:
+			fragmentManager.findFragmentByTag("address_editor");
+			break;
+		}
+		fragmentManager.beginTransaction().remove(fragment).commit();
 		super.onSaveInstanceState(outState);
 	}
 
@@ -233,7 +244,7 @@ public class KeypadMapper2Activity extends Activity implements OnSharedPreferenc
 	}
 
 	@Override
-	public void onDestroy() {
+	public void onDestroy() {		
 		locationManager.removeUpdates(this);
 		try {
 			if (trackWriter != null) {

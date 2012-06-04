@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="actionPreferences">Einstellungen</string>
+    <string name="actionStop">Stop</string>
+    <string name="app_name">Keypadmapper2</string>
+    <string name="backspace">Zürck</string>
+    <string name="buttonLeft">L</string>
+    <string name="buttonFront">V</string>
+    <string name="buttonRight">R</string>
+    <string name="button1">1</string>
+    <string name="button2">2</string>
+    <string name="button3">3</string>
+    <string name="button4">4</string>
+    <string name="button5">5</string>
+    <string name="button6">6</string>
+    <string name="button7">7</string>
+    <string name="button8">8</string>
+    <string name="button9">9</string>
+    <string name="buttonCLR">CLR</string>
+    <string name="button0">0</string>
+    <string name="buttonA">a</string>
+    <string name="buttonB">b</string>
+    <string name="buttonC">c</string>
+    <string name="buttonD">d</string>
+    <string name="buttonE">e</string>
+    <string name="buttonF">f</string>
+    <string name="buttonG">g</string>
+    <string name="buttonH">h</string>
+    <string name="buttonI">i</string>
+    <string name="buttonJ">j</string>
+    <string name="buttonK">k</string>
+    <string name="buttonL">l</string>
+    <string name="buttonSep1">,</string>
+    <string name="buttonSep2">-</string>
+    <string name="buttonSep3">/</string>
+    <string name="errorFileOpen">Fehler beim Schreiben der Dateien</string>
+    <string name="errorGpsDisabled">GPS ist deaktiviert. Bitte GPS einschalten, um diese Anwendung zu nutzen</string>
+    <string name="errorStorageRO">Der externe Speicher ist im Nur-Lese-Modus. Keypadmapper benötigt Schreibzugriff, um die eingegeben Daten zu speichern.</string>
+    <string name="errorStorageUnavailable">Der externe Speicher ist nicht verfügbar. Keypadmapper benötigt Zugriff auf diesen Speicher, um die eingegeben Daten zu speichern.</string>
+    <string name="OK">OK</string>
+    <string name="prefsCategoryDataTitle">Daten</string>
+    <string name="prefsDataPlacementDistance">Entfernung der Adress-Knoten</string>
+    <string name="quit">Beenden</string>
+    <string name="ready">Fertig</string>
+    <string name="systemSettings">Einstellungen</string>
+    <string name="waitForGps">Warten auf GPS</string>
+    <string name="writeToNewFile">Schreibe in neue Datei</string>
+    <string name="Housenumber">Hausnummer</string>
+    <string name="Housename">Hausname</string>
+    <string name="Street">Straße</string>
+    <string name="Postcode">Postleitzahl</string>
+    <string name="City">Stadt</string>
+    <string name="Countrycode">Ländercode</string>
+    <string name="Keypad">Tastenfeld</string>
+    <string name="AddressEditor">Adress-Editor</string>
+    <string name="FolderCreationFailed">Das Verzeichnis zum Speichern der Daten konnte nicht auf dem externen Speicher angelegt werden.</string>
+    <string name="satString">nutze %1$d/%2$d Satelliten</string>
+    <string name="statusReadyString">Bereit, Genauigkeit %.1fm</string>
+
+</resources>

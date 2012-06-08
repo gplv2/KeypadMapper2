@@ -170,6 +170,18 @@ public class KeypadMapper2Activity extends FragmentActivity implements OnSharedP
 		}
 
 		FragmentManager fragmentManager = getSupportFragmentManager();
+		// remove old fragments (will happen during restart due to configuration changes)
+		Fragment oldFragment;
+		oldFragment = fragmentManager.findFragmentByTag("keypad");
+		if (oldFragment != null) {
+			fragmentManager.beginTransaction().remove(oldFragment).commit();
+		} else {
+			oldFragment = fragmentManager.findFragmentByTag("address_editor");
+			if (oldFragment != null) {
+				fragmentManager.beginTransaction().remove(oldFragment).commit();
+			}
+		}
+		
 		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 		Fragment mainFragment;
 		switch (state) {
@@ -196,6 +208,7 @@ public class KeypadMapper2Activity extends FragmentActivity implements OnSharedP
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
 		outState.putInt("state", state.ordinal());
 		outState.putString("basename", basename);
 		outState.putString("housenumber", address.get("addr:housenumber"));
@@ -204,22 +217,11 @@ public class KeypadMapper2Activity extends FragmentActivity implements OnSharedP
 		outState.putString("postcode", address.get("addr:postcode"));
 		outState.putString("city", address.get("addr:city"));
 		outState.putString("country", address.get("addr:country"));
-		FragmentManager fragmentManager = getSupportFragmentManager();
-		Fragment fragment = null;
-		switch (state) {
-		case keypad:
-			fragment = fragmentManager.findFragmentByTag("keypad");
-			break;
-		case extended:
-			fragmentManager.findFragmentByTag("address_editor");
-			break;
-		}
-		fragmentManager.beginTransaction().remove(fragment).commit();
-		super.onSaveInstanceState(outState);
 	}
 
 	@Override
 	protected void onPause() {
+		super.onPause();
 		try {
 			if (trackWriter != null) {
 				trackWriter.flush();
@@ -230,11 +232,11 @@ public class KeypadMapper2Activity extends FragmentActivity implements OnSharedP
 		} catch (IOException e) {
 			// something is going horribly wrong. no way out.
 		}
-		super.onPause();
 	}
 
 	@Override
 	public void onDestroy() {		
+		super.onDestroy();
 		locationManager.removeUpdates(this);
 		try {
 			if (trackWriter != null) {
@@ -246,7 +248,6 @@ public class KeypadMapper2Activity extends FragmentActivity implements OnSharedP
 		} catch (IOException e) {
 			// should not happen, the file may be damaged anyway.
 		}
-		super.onDestroy();
 	}
 
 	@Override

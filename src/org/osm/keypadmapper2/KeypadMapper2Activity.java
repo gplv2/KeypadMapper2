@@ -43,15 +43,10 @@ import android.support.v4.app.FragmentTransaction;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
-import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
 public class KeypadMapper2Activity extends FragmentActivity implements OnSharedPreferenceChangeListener, AddressInterface, LocationListener, Listener {
 	private static final int REQUEST_GPS_ENABLE = 1;
-	// order of entries in R.array.fragmentSelectorSpinnerEntries
-	private static final int NAVIGATION_ITEM_KEYPAD = 0;
-	private static final int NAVIGATION_ITEM_EXTENDED = 1;
 	private static final long locationUpdateMinTimeMs = 0; // minimum time for location updates in ms
 	private static final float locationUpdateMinDistance = 0; // minimum distance for location updates in m
 	private HashMap<String, String> address;
